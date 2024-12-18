@@ -1,0 +1,60 @@
+@import '@/styles/variables.scss';
+.SliderPhotoProductType {
+  width: 100%;
+  height: 190px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.wrapperBox {
+  position: relative;
+  width: 100%;
+}
+
+.slider {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.sliderItem {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.image {
+  object-fit: cover;
+  width: 100%;
+}
+
+.wrapperArrow {
+  position: absolute;
+  z-index: 10000;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  background-color: $MainWhite;
+  border-radius: 50px;
+  cursor: pointer;
+}
+
+.arrowPrev {
+  left: 0;
+}
+
+.arrowNext {
+  right: 0;
+
+  & img {
+    transform: rotate(180deg);
+  }
+}

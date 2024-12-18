@@ -1,7 +1,60 @@
+// {
+//   "compilerOptions": {
+//     "baseUrl": ".",
+//     "esModuleInterop": true,
+//     "outDir": "./dist",
+//     "target": "ES2022",
+//     "lib": [
+//       "DOM",
+//       "DOM.Iterable",
+//       "ES2022"
+//     ],
+//     "allowJs": true,
+//     "skipLibCheck": true,
+//     "strict": false,
+//     "strictNullChecks": true,
+//     "forceConsistentCasingInFileNames": true,
+//     "noEmit": true,
+//     "incremental": true,
+//     "jsx": "preserve",
+//     "module": "esnext",
+//     "moduleResolution": "bundler",
+//     "resolveJsonModule": true,
+//     "sourceMap": true,
+//     "isolatedModules": true,
+//     "plugins": [
+//       {
+//         "name": "next"
+//       }
+//     ],
+//     "paths": {
+//       "@payload-config": [
+//         "./src/payload.config.ts"
+//       ],
+//       "react": [
+//         "./node_modules/@types/react"
+//       ],
+//       "@/*": [
+//         "./src/*"
+//       ],
+//     }
+//   },
+//   "include": [
+//     "**/*.ts",
+//     "**/*.tsx",
+//     ".next/types/**/*.ts",
+//     "redirects.js",
+//     "next.config.js"
+//   ],
+//   "exclude": [
+//     "node_modules"
+//   ]
+// }
 {
   "compilerOptions": {
     "baseUrl": ".",
     "esModuleInterop": true,
+    "outDir": "./dist",
     "target": "ES2022",
     "lib": [
       "DOM",
@@ -13,7 +66,7 @@
     "strict": false,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
+    "noEmit": false, // Изменено
     "incremental": true,
     "jsx": "preserve",
     "module": "esnext",
@@ -35,7 +88,7 @@
       ],
       "@/*": [
         "./src/*"
-      ],
+      ]
     }
   },
   "include": [
@@ -44,7 +97,7 @@
     ".next/types/**/*.ts",
     "redirects.js",
     "next.config.js"
-  ],
+, "src/scripts/initScripts.ts"  ],
   "exclude": [
     "node_modules"
   ]

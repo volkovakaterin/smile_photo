@@ -1,0 +1,9 @@
+.ProductBasket {
+  .wrapperPhoto {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 13%);
+    justify-content: space-between;
+    margin-top: 15px;
+    column-gap: 16px;
+  }
+}

@@ -1,0 +1,17 @@
+@import '@/styles/variables.scss';
+@import '@/styles/mixins.scss';
+
+.ButtonWithContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  height: 46px;
+  background-color: $Orange;
+  border-radius: 5px;
+  cursor: pointer;
+  .text {
+    @include font_1920;
+    color: $MainWhite;
+  }
+}

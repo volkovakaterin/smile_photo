@@ -1,0 +1,21 @@
+@import '@/styles/variables.scss';
+
+.HomePage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: calc(100vh - 60px);
+
+  .title {
+    text-align: center;
+    color: $MainBlack;
+  }
+
+  .wrapperManage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin-top: 50px;
+  }
+}

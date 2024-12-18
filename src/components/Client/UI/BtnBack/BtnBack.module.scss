@@ -1,0 +1,32 @@
+@import '@/styles/variables.scss';
+@import '@/styles/mixins.scss';
+
+.BtnBack {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 34px;
+  min-width: 160px;
+  height: 52px;
+  padding: 4px 20px 4px 5px;
+  background-color: $Orange;
+  border-radius: 30px;
+  cursor: pointer;
+  .text {
+    @include font_1920;
+    color: $MainWhite;
+  }
+  .wrapperArrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50px;
+    background-color: $MainWhite;
+
+    & img {
+      transform: rotate(-180deg);
+    }
+  }
+}

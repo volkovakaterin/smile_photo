@@ -1,0 +1,37 @@
+import { CollectionConfig } from 'payload';
+
+const Folders: CollectionConfig = {
+    slug: 'folders',
+    labels: {
+        singular: 'Folder',
+        plural: 'Folders',
+    },
+    admin: {
+        useAsTitle: 'name',
+    },
+    fields: [
+        {
+            name: 'name',
+            type: 'text',
+            required: true,
+            label: 'Название папки',
+            admin: {
+                readOnly: true,
+            },
+        },
+        {
+            name: 'path',
+            type: 'text',
+            label: 'Локальный путь',
+            admin: {
+                readOnly: true,
+            },
+        },
+    ],
+    access: {
+        read: () => true,
+    },
+    timestamps: true,
+};
+
+export default Folders;

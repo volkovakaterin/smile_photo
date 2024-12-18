@@ -1,0 +1,23 @@
+@import '@/styles/variables.scss';
+@import '@/styles/mixins.scss';
+
+.BtnKeyboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 113px;
+  height: 46px;
+  background-color: $MainWhite;
+  border-radius: 5px;
+  border: 1px solid $MainBlack;
+  cursor: pointer;
+  .text {
+    @include font_1920;
+    color: $MainBlack;
+  }
+
+  & img {
+    width: 35px;
+    height: 35px;
+  }
+}

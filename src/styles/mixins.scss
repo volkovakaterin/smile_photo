@@ -1,0 +1,33 @@
+//Typography
+
+//1920
+@mixin H1_1920 {
+  font-size: 54px;
+  line-height: 64px;
+}
+@mixin H2_1920 {
+  font-weight: 600;
+  font-size: 54px;
+  line-height: 64px;
+}
+@mixin H3_1920 {
+  font-size: 42px;
+  line-height: 43px;
+}
+
+@mixin H4_1920 {
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+}
+@mixin font_1920 {
+  font-size: 26px;
+  line-height: 31px;
+  font-weight: 500;
+}
+
+@mixin p_1920 {
+  font-weight: 400;
+  font-size: 16px;
+  font-weight: 120%;
+}

@@ -1,0 +1,22 @@
+.SuccessOrder {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .title {
+    text-align: center;
+    margin-top: 15px;
+  }
+
+  .text {
+    display: block;
+    align-items: center;
+    margin-top: 20px;
+  }
+
+  .wrapperBtn {
+    margin-top: 122px;
+  }
+}

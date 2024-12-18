@@ -22,6 +22,14 @@ const nextConfig = {
   },
   reactStrictMode: true,
   redirects,
+  async rewrites() {
+    return [
+      {
+        source: '/images/:dir/:path*',
+        destination: '/api/images/:dir/:path*',
+      },
+    ]
+  },
 }
 
 export default withPayload(nextConfig)

@@ -1,0 +1,39 @@
+@import '@/styles/variables.scss';
+.breadcrumbs {
+  display: block;
+  margin-top: 10px;
+  color: $TextInput;
+}
+
+.EditOrder {
+  overflow: hidden;
+  height: calc(100vh - 215px);
+  .title {
+    margin-top: 30px;
+    text-align: center;
+  }
+
+  .dateOrder {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    color: $TextInput;
+  }
+
+  .wrapperProducts {
+    margin-top: 20px;
+    height: calc(100vh - 360px);
+    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+.wrapperBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}

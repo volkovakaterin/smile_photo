@@ -1,0 +1,17 @@
+.imageTypeProduct {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+
+  & img {
+    object-fit: contain;
+    background-color: #d9d9d9;
+  }
+}
+
+.wrapperSliderPhotoProduct {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}

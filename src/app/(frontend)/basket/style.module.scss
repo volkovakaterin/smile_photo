@@ -1,0 +1,40 @@
+.Basket {
+  height: calc(100vh - 160px);
+  overflow: hidden;
+
+  .dateOrder {
+    display: block;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .wrapperProducts {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-height: calc(100vh - 290px);
+    margin-top: 30px;
+    overflow-y: scroll;
+  }
+
+  .title {
+    text-align: center;
+  }
+}
+
+.wrapperLink {
+  position: fixed;
+  bottom: 10px;
+  z-index: 1000;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.wrapperSliderPhotoProduct {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}

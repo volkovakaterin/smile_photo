@@ -1,0 +1,78 @@
+.image {
+  object-fit: contain;
+  background-color: #d9d9d9;
+  cursor: pointer;
+}
+
+.product {
+  counter-reset: item; /* Инициализируем счетчик */
+  padding-left: 2em; /* Отступ для маркеров */
+  font-size: 16px;
+
+  & li {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-top: 10px;
+    counter-increment: item; /* Увеличиваем счетчик для каждого <li> */
+    position: relative;
+  }
+
+  & li::before {
+    content: counter(item) '.'; /* Отображаем текущий номер */
+    position: absolute;
+    left: -2em; /* Смещаем маркер влево */
+    font-weight: bold; /* Для выделения */
+  }
+
+  & li:not(:last-child) {
+    border-bottom: 1px dotted rgba(224, 224, 224, 1);
+    padding-bottom: 10px;
+  }
+}
+
+.productQuantity,
+.electronicFrame {
+  font-size: 16px;
+  & li {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-top: 10px;
+  }
+
+  & li:not(:last-child) {
+    border-bottom: 1px dotted rgba(224, 224, 224, 1);
+    padding-bottom: 10px;
+  }
+}
+
+.wrapperPhotos {
+  & .wrapperPhoto {
+    margin-bottom: 16px;
+    padding-left: 20px;
+    padding-bottom: 10px;
+    display: flex;
+    gap: 50px;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba(224, 224, 224, 1);
+    }
+  }
+}
+
+.photoName {
+  width: 212px;
+  font-size: 13px;
+}
+
+.tableOrder {
+  box-shadow: none;
+  & .row {
+    vertical-align: baseline;
+  }
+}
+
+.itemList {
+  height: 45px;
+}

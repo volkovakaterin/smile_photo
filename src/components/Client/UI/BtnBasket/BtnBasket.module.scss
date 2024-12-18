@@ -1,0 +1,21 @@
+@import '@/styles/variables.scss';
+
+.BtnBasket {
+  position: relative;
+  cursor: pointer;
+
+  .quantity {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    color: #fff;
+    background-color: $Orange;
+  }
+}

@@ -1,0 +1,29 @@
+.SlideTypeProduct {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  height: 180px;
+
+  & .image {
+    object-fit: contain;
+  }
+}
+
+.photoName {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  text-align: center;
+  width: 100%;
+  font-size: 13px;
+  overflow-wrap: break-word;
+}
+
+.sliderItem {
+  position: relative;
+  height: calc(100% - 15px);
+  width: 250px;
+  display: flex;
+  justify-content: space-between;
+}

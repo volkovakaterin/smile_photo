@@ -1,55 +1,118 @@
-import type { Metadata } from 'next'
+'use client'
 
-import { cn } from 'src/utilities/cn'
-import { GeistMono } from 'geist/font/mono'
-import { GeistSans } from 'geist/font/sans'
-import React from 'react'
+import React, { useEffect, useState } from 'react';
+import '@/styles/globals.scss';
+import { Inter } from '@/assets/fonts/fonts';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
+import { OrderProvider, TYPE_MODE, useOrder } from '@/providers/OrderProvider';
+import useIdle from '@/hooks/trackInactivity';
+import { TheModal } from '@/components/Client/TheModal/TheModal';
+import { ButtonSecondary } from '@/components/Client/UI/ButtonSecondary/ButtonSecondary';
+import { usePathname, useRouter } from 'next/navigation';
 
-import { AdminBar } from '@/components/AdminBar'
-import { Footer } from '@/Footer/Component'
-import { Header } from '@/Header/Component'
-import { LivePreviewListener } from '@/components/LivePreviewListener'
-import { Providers } from '@/providers'
-import { InitTheme } from '@/providers/Theme/InitTheme'
-import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { draftMode } from 'next/headers'
 
-import './globals.css'
-import { getServerSideURL } from '@/utilities/getURL'
+const queryClient = new QueryClient();
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isEnabled } = await draftMode()
+function RootLayoutContent({ children }: { children: React.ReactNode }) {
+  const [showModal, setShowModal] = useState(false);
+  const { resetOrder, orderId, mode } = useOrder();
+  const [idleEnabled, setIdleEnabled] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // useEffect(() => {
+  //   if (!pathname) return;
+  //   if (pathname.includes('/super-admin')) {
+  //     console.log(pathname, 'адрес страницы')
+  //     setIdleEnabled(false);
+  //   } else {
+  //     setIdleEnabled(true);
+  //   }
+  // }, [pathname]);
+
+  // const action = () => {
+  //   if (orderId) {
+  //     setShowModal(true);
+  //   }
+  //   else {
+  //     console.log('на домашнюю из action')
+  //     router.push(`/`)
+  //   }
+  // };
+
+  // Время бездействия 60 секунд, вызываем action, когда пользователь неактивен
+  // useIdle({
+  //   timeout: idleEnabled ? 60000 : 0,
+  //   action: idleEnabled ? action : undefined,
+  // });
+
+  // useEffect(() => {
+  //   let timer: NodeJS.Timeout | null = null;
+
+  //   if (showModal) {
+  //     timer = setTimeout(() => {
+  //       resetOrder();
+  //       setShowModal(false);
+  //       console.log('на домашнюю из эффекта');
+  //       router.push(`/`);
+  //     }, 30000);
+  //   }
+
+
+  //   return () => {
+  //     console.log('clearTimeout');
+  //     if (timer) clearTimeout(timer);
+  //   };
+  // }, [showModal, resetOrder]);
 
   return (
-    <html className={cn(GeistSans.variable, GeistMono.variable)} lang="en" suppressHydrationWarning>
-      <head>
-        <InitTheme />
-        <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
-      </head>
-      <body>
-        <Providers>
-          <AdminBar
-            adminBarProps={{
-              preview: isEnabled,
-            }}
-          />
-          <LivePreviewListener />
+    <>
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
 
-          <Header />
-          {children}
-          <Footer />
-        </Providers>
+      {showModal && (
+        <TheModal open={showModal} handleClose={() => setShowModal(false)} width={800}>
+          <h3 style={{ marginTop: '50px', textAlign: 'center' }}>
+            {mode == TYPE_MODE.CREAT ? `Хотите продолжить оформление заказа?` : `Хотите продолжить редактирование заказа?`}
+          </h3>
+          <div
+            style={{
+              display: 'flex',
+              gap: '50px',
+              alignItems: 'center',
+              marginTop: '50px',
+              justifyContent: 'center',
+            }}
+          >
+            <ButtonSecondary text="Продолжить" onClick={() => setShowModal(false)} />
+            <ButtonSecondary
+              text="Начать новый заказ"
+              onClick={() => {
+                resetOrder();
+                setShowModal(false);
+              }}
+            />
+          </div>
+        </TheModal>
+      )}
+    </>
+  );
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ru">
+      <head></head>
+      <body className={`${Inter.variable}`}>
+        <OrderProvider>
+          <RootLayoutContent>{children}</RootLayoutContent>
+        </OrderProvider>
       </body>
     </html>
-  )
+  );
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL(getServerSideURL()),
-  openGraph: mergeOpenGraph(),
-  twitter: {
-    card: 'summary_large_image',
-    creator: '@payloadcms',
-  },
-}

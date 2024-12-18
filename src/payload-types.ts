@@ -16,6 +16,10 @@ export interface Config {
     media: Media;
     categories: Category;
     users: User;
+    folders: Folder;
+    orders: Order;
+    products: Product;
+    directories: Directory;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -31,6 +35,10 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    folders: FoldersSelect<false> | FoldersSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
+    directories: DirectoriesSelect<false> | DirectoriesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -614,6 +622,64 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "folders".
+ */
+export interface Folder {
+  id: string;
+  name: string;
+  path?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: string;
+  tel_number: string;
+  images?:
+    | {
+        image: string;
+        products: {
+          product: string;
+          label: string;
+          quantity: number;
+          done: boolean;
+          electronic_frame: boolean;
+          id?: string | null;
+        }[];
+        id?: string | null;
+      }[]
+    | null;
+  status: 'created' | 'open' | 'closed' | 'paid';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "directories".
+ */
+export interface Directory {
+  id: string;
+  name: string;
+  path: string;
+  service_name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -706,6 +772,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: string | User;
+      } | null)
+    | ({
+        relationTo: 'folders';
+        value: string | Folder;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: string | Order;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: string | Product;
+      } | null)
+    | ({
+        relationTo: 'directories';
+        value: string | Directory;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -874,11 +956,9 @@ export interface PagesSelect<T extends boolean = true> {
   meta?:
     | T
     | {
-        overview?: T;
         title?: T;
         image?: T;
         description?: T;
-        preview?: T;
       };
   publishedAt?: T;
   slug?: T;
@@ -899,11 +979,9 @@ export interface PostsSelect<T extends boolean = true> {
   meta?:
     | T
     | {
-        overview?: T;
         title?: T;
         image?: T;
         description?: T;
-        preview?: T;
       };
   publishedAt?: T;
   authors?: T;
@@ -1035,6 +1113,62 @@ export interface UsersSelect<T extends boolean = true> {
   hash?: T;
   loginAttempts?: T;
   lockUntil?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "folders_select".
+ */
+export interface FoldersSelect<T extends boolean = true> {
+  name?: T;
+  path?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  tel_number?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        products?:
+          | T
+          | {
+              product?: T;
+              label?: T;
+              quantity?: T;
+              done?: T;
+              electronic_frame?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "directories_select".
+ */
+export interface DirectoriesSelect<T extends boolean = true> {
+  name?: T;
+  path?: T;
+  service_name?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1208,7 +1342,6 @@ export interface SearchSelect<T extends boolean = true> {
   title?: T;
   priority?: T;
   doc?: T;
-  docUrl?: T;
   slug?: T;
   meta?:
     | T
