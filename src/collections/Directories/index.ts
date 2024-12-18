@@ -29,8 +29,8 @@ const Directories: CollectionConfig = {
             label: 'Сервисное имя',
             access: {
                 read: () => true,
-                create: () => false,
-                update: () => false,
+                create: () => true,
+                update: () => true,
             }
         },
 

@@ -13,7 +13,7 @@ const validateFoldersInDatabase = async () => {
         },
     });
 
-    const photosDirectory = papka.docs[0].path;
+    const photosDirectory = `${papka.docs[0].path}/`;
     try {
         // Получение всех записей из базы данных
         const allFolders = await payload.find({

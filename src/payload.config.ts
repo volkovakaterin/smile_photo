@@ -23,6 +23,7 @@ import Products from './collections/Products'
 import createArchive from './endpoints/createArchive'
 import Directories from './collections/Directories'
 import savePhotoFormat from './endpoints/savePhotoFormat'
+import { initDirectories } from './services/initDirectories'
 
 
 
@@ -72,6 +73,9 @@ export default buildConfig({
     url: process.env.DATABASE_URI || '',
   }),
   collections: [Pages, Posts, Media, Categories, Users, Folders, Orders, Products, Directories],
+  onInit: async (payload) => {
+    await initDirectories(payload);
+  },
   cors: [getServerSideURL()].filter(Boolean),
   endpoints: [getPhotos, createArchive, savePhotoFormat],
   globals: [Header, Footer],

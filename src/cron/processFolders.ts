@@ -12,7 +12,7 @@ const processFolders = async () => {
         },
     });
 
-    const photosDirectory = papka.docs[0].path;
+    const photosDirectory = `${papka.docs[0].path}/`;
 
 
     const traverseDirectory = async (directory) => {
