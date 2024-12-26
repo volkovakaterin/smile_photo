@@ -20,10 +20,11 @@ import Folders from './collections/Folders'
 import getPhotos from './endpoints/getPhotos'
 import Orders from './collections/Orders'
 import Products from './collections/Products'
-import createArchive from './endpoints/createArchive'
 import Directories from './collections/Directories'
 import savePhotoFormat from './endpoints/savePhotoFormat'
 import { initDirectories } from './services/initDirectories'
+import createArchive from './endpoints/createArchive'
+import { FunctionalMode } from './FunctionalMode/config'
 
 
 
@@ -77,8 +78,8 @@ export default buildConfig({
     await initDirectories(payload);
   },
   cors: [getServerSideURL()].filter(Boolean),
-  endpoints: [getPhotos, createArchive, savePhotoFormat],
-  globals: [Header, Footer],
+  endpoints: [getPhotos, savePhotoFormat, createArchive],
+  globals: [Header, Footer, FunctionalMode],
   plugins: [
     ...plugins,
     // storage-adapter-placeholder

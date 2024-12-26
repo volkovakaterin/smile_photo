@@ -63,7 +63,6 @@ const SearchPhoto = () => {
     const checkImagesInFolder = async (folderPath) => {
         const photosDirectory = directories.photos;
         try {
-            console.log('checkImagesInFolder')
             const response = await axios.get('/api/check-images'
                 , {
                     params: {
@@ -106,13 +105,14 @@ const SearchPhoto = () => {
             <NavigationBar basket={!!orderId} totalQuantity={quantityProducts} />
             <div className={styles.SearchPhoto}>
                 <Breadcrumbs breadcrumbs={breadcrumbs} onClick={handleBreadcrumbClick} />
-                {!hasImages && (<h2 className={styles.title}>Выберите папку</h2>)}
-                <ul className={styles.wrapperFolders}>
-                    {isLoadingFolder ? <div>Загрузка</div> : (folders.map((folder: Folder, index) => (
-                        <Folder key={`${folder.name}-${index}`} onClick={() => handleFolderClick(folder)} name={folder.name}>
-                        </Folder>
-                    )))}
-                </ul>
+                {!hasImages && (
+                    <><h2 className={styles.title}>Выберите папку</h2><ul className={styles.wrapperFolders}>
+                        {isLoadingFolder ? <div>Загрузка</div> : (folders.map((folder: Folder, index) => (
+                            <Folder key={`${folder.name}-${index}`} onClick={() => handleFolderClick(folder)} name={folder.name}>
+                            </Folder>
+                        )))}
+                    </ul></>
+                )}
                 {hasImages && (<PhotoGallery folderPath={currentPath} />)}
                 {orderId && mode == TYPE_MODE.CREAT && (<Link href={'/basket'} className={styles.linkBasket}><ButtonSecondary text='Перейти в корзину' width={444} /></Link>)}
                 {orderId && mode == TYPE_MODE.EDIT && (<Link href={'/edit-order'} className={styles.linkBasket}><ButtonSecondary text='Перейти к заказу' width={444} /></Link>)}

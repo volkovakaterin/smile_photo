@@ -24,9 +24,11 @@ interface PhotoCardProps {
     onOpen?: () => void;
     quantity?: number;
     dir: string;
+    openPreviewModal?: (image: string) => void;
 }
 
-export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelectPhoto, selectPhotos, fromBasket, onOpen, quantity, dir }: PhotoCardProps) => {
+export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelectPhoto, selectPhotos,
+    fromBasket, onOpen, quantity, dir, openPreviewModal }: PhotoCardProps) => {
     const [btnParams, setBtnParams] = useState<{ icon: string, backgroundColor: string } | undefined>(undefined);
     const [select, setSelect] = useState(false);
 
@@ -43,16 +45,16 @@ export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelec
 
 
     return (
-        <div style={{ paddingTop: '30px' }}>
+        <div style={{ paddingTop: `${!fromBasket ? '30px' : false}` }}>
             <div className={styles.PhotoCard}>
-                {fromBasket && (<span className={styles.quantity} onClick={onOpen}>{quantity}</span>)}
+                {(fromBasket && quantity != null && quantity > 0) && (<span className={styles.quantity} onClick={onOpen}>{quantity}</span>)}
                 <Image
                     src={`/images${dir}/${image}`}
-                    fill alt={'photo'} onClick={() => { onClick && (onClick(index)) }} className={styles.image} />
+                    fill alt={'photo'} onClick={() => { fromBasket ? (openPreviewModal && openPreviewModal(image)) : (onClick && onClick(index)) }} className={styles.image} />
                 {!fromBasket && (<div className={styles.statusBox}><span className={`${styles.statusMark} ${select ? styles.visible : false}`}></span></div>)}
                 <div className={styles.wrapperBtn}
                 >
-                    {fromBasket && (<ButtonWithContent icon={Edit} backgroundColor={'#fff'} onClick={onOpen} />)}
+                    {(fromBasket && onOpen) && (<ButtonWithContent icon={Edit} backgroundColor={'#fff'} onClick={onOpen} />)}
                     <ButtonWithContent icon={btnParams && (btnParams.icon)} backgroundColor={btnParams && (btnParams.backgroundColor)}
                         onClick={() => toggleSelect(image, select, index)} />
                 </div>

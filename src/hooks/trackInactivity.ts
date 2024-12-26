@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const DEFAULT_EVENTS: (keyof DocumentEventMap)[] = [
+const DEFAULT_EVENTS: (keyof DocumentEventMap | keyof WindowEventMap)[] = [
     "keypress",
     "mousemove",
     "touchmove",
@@ -16,7 +16,7 @@ const DEFAULT_OPTIONS = {
 export default function useIdle(
     options?: Partial<{
         timeout: number;
-        events: (keyof DocumentEventMap)[];
+        events: (keyof DocumentEventMap | keyof WindowEventMap)[];
         initialState: boolean;
         action?: () => void;
     }>
@@ -48,12 +48,22 @@ export default function useIdle(
             if (action) action();
         }, timeout);
 
-        events.forEach((event) => document.addEventListener(event, handleEvents));
+        events.forEach((event) => {
+            if (event === "scroll") {
+                window.addEventListener("scroll", handleEvents, true);
+            } else {
+                document.addEventListener(event, handleEvents);
+            }
+        });
 
         return () => {
-            events.forEach((event) =>
-                document.removeEventListener(event, handleEvents)
-            );
+            events.forEach((event) => {
+                if (event === "scroll") {
+                    window.removeEventListener("scroll", handleEvents, true);
+                } else {
+                    document.removeEventListener(event, handleEvents);
+                }
+            });
             window.clearTimeout(timer.current);
         };
     }, [action, timeout, events]);

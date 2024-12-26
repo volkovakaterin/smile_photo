@@ -12,6 +12,7 @@ import 'slick-carousel/slick/slick-theme.css';
 import { SlidePreview } from '../SlidePreview/SlidePreview';
 import { CustomArrow } from '../UI/CustomArrow/CustomArrow';
 
+
 interface PreviewPhotoProps {
     open: boolean;
     handleClose?: () => void;

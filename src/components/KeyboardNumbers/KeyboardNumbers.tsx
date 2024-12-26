@@ -1,8 +1,7 @@
 'use client';
 
-import { FC, ReactNode, memo } from 'react';
+import { FC, memo } from 'react';
 import styles from './KeyboardNumbers.module.scss';
-import Image from 'next/image';
 import { BtnKeyboard } from '../Client/UI/BtnKeyboard/BtnKeyboard';
 
 const btns = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '0', 'delete']

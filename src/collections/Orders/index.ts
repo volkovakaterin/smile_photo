@@ -3,8 +3,8 @@ import { CollectionConfig } from 'payload';
 const Orders: CollectionConfig = {
     slug: 'orders',
     labels: {
-        singular: 'Order',
-        plural: 'Orders',
+        singular: 'Заказ',
+        plural: 'Заказы',
     },
     admin: {
         useAsTitle: 'tel_number',
@@ -35,7 +35,7 @@ const Orders: CollectionConfig = {
                 {
                     name: 'products',
                     type: 'array',
-                    required: true,
+                    required: false,
                     label: 'Продукты с этим изображением',
                     fields: [
                         {

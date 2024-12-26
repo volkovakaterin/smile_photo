@@ -23,7 +23,7 @@
   .wrapperProducts {
     margin-top: 20px;
     height: calc(100vh - 360px);
-    overflow-y: scroll;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 20px;

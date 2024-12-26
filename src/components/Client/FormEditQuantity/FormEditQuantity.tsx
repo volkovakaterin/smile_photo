@@ -31,17 +31,12 @@ export const FormEditQuantity = memo(({ onClose, quantity, confirmChange }: Form
     });
 
     const changeQuantity = (type: 'increment' | 'decrement') => {
-        console.log('changeQuantity')
-
-        console.log(control._formValues.quantity)
         const currentQuantity = control._formValues.quantity || 0;
         const newQuantity = type === 'increment' ? currentQuantity + 1 : Math.max(currentQuantity - 1, 1);
-        console.log(newQuantity)
         setValue('quantity', newQuantity);
     };
 
     const onSubmit = (formData: FormData) => {
-        console.log(formData);
         onClose();
         confirmChange(formData);
     };

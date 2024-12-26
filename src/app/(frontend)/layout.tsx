@@ -12,6 +12,7 @@ import useIdle from '@/hooks/trackInactivity';
 import { TheModal } from '@/components/Client/TheModal/TheModal';
 import { ButtonSecondary } from '@/components/Client/UI/ButtonSecondary/ButtonSecondary';
 import { usePathname, useRouter } from 'next/navigation';
+import { FunctionalModeProvider } from '@/providers/FunctionalMode';
 
 
 const queryClient = new QueryClient();
@@ -23,50 +24,45 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // useEffect(() => {
-  //   if (!pathname) return;
-  //   if (pathname.includes('/super-admin')) {
-  //     console.log(pathname, 'адрес страницы')
-  //     setIdleEnabled(false);
-  //   } else {
-  //     setIdleEnabled(true);
-  //   }
-  // }, [pathname]);
+  useEffect(() => {
+    if (!pathname) return;
+    if (pathname.includes('/super-admin')) {
+      setIdleEnabled(false);
+    } else {
+      setIdleEnabled(true);
+    }
+  }, [pathname]);
 
-  // const action = () => {
-  //   if (orderId) {
-  //     setShowModal(true);
-  //   }
-  //   else {
-  //     console.log('на домашнюю из action')
-  //     router.push(`/`)
-  //   }
-  // };
+  const action = () => {
+    if (orderId) {
+      setShowModal(true);
+    }
+    else {
+      router.push(`/`)
+    }
+  };
 
-  // Время бездействия 60 секунд, вызываем action, когда пользователь неактивен
-  // useIdle({
-  //   timeout: idleEnabled ? 60000 : 0,
-  //   action: idleEnabled ? action : undefined,
-  // });
+  useIdle({
+    timeout: idleEnabled ? 60000 : 0,
+    action: idleEnabled ? action : undefined,
+  });
 
-  // useEffect(() => {
-  //   let timer: NodeJS.Timeout | null = null;
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
 
-  //   if (showModal) {
-  //     timer = setTimeout(() => {
-  //       resetOrder();
-  //       setShowModal(false);
-  //       console.log('на домашнюю из эффекта');
-  //       router.push(`/`);
-  //     }, 30000);
-  //   }
+    if (showModal) {
+      timer = setTimeout(() => {
+        resetOrder();
+        setShowModal(false);
+        router.push(`/`);
+      }, 30000);
+    }
 
 
-  //   return () => {
-  //     console.log('clearTimeout');
-  //     if (timer) clearTimeout(timer);
-  //   };
-  // }, [showModal, resetOrder]);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [showModal, resetOrder]);
 
   return (
     <>
@@ -94,6 +90,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
               onClick={() => {
                 resetOrder();
                 setShowModal(false);
+                router.push(`/`)
               }}
             />
           </div>
@@ -108,9 +105,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <head></head>
       <body className={`${Inter.variable}`}>
-        <OrderProvider>
-          <RootLayoutContent>{children}</RootLayoutContent>
-        </OrderProvider>
+        <FunctionalModeProvider>
+          <OrderProvider>
+            <RootLayoutContent>{children}</RootLayoutContent>
+          </OrderProvider>
+        </FunctionalModeProvider>
       </body>
     </html>
   );

@@ -8,8 +8,10 @@ export interface PhotoOrder {
     products: { product: string, quantity: number }[],
 }
 
+const url = process.env.NEXT_PUBLIC_SERVER_URL
+
 export const changeStatusOrder = async (data: { status: boolean, id: string }): Promise<Response> => {
-    const response = await axios.patch<Response>(`http://localhost:3000/api/orders/${data.id}`,
+    const response = await axios.patch<Response>(`${url}/api/orders/${data.id}`,
         { status: data.status });
     return response.data;
 };

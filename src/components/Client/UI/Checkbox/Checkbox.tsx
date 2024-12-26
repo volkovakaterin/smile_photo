@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
 import styles from './Checkbox.module.scss';
+import Mark from '@/assets/icons/check-mark-svgrepo-com.svg';
+import Image from 'next/image';
 
 interface CheckboxProps {
     id: string;
@@ -22,7 +23,11 @@ export default function CheckboxCustom({ id, label, onToggle, value }: CheckboxP
             <input type="checkbox" checked={value} onChange={handleChecked} id={id} />
             <label htmlFor={id} className={value ? styles.checked : styles.empty}>
                 {label}
-                <span className={styles.box}><span className={styles.mark}></span></span>
+                <span className={styles.box}>
+                    <Image alt='Да' src={Mark}
+                        className={`${styles.mark} ${value ? styles.visible : false}`}>
+                    </Image>
+                </span>
             </label>
         </div>
     );

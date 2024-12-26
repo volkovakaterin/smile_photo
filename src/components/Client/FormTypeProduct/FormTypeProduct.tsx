@@ -1,60 +1,67 @@
 'use client';
 
-import { memo, useMemo, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styles from './FormTypeProduct.module.scss';
 import { ButtonSecondary } from '../UI/ButtonSecondary/ButtonSecondary';
-import Link from 'next/link';
-import CheckboxCustom from '../UI/Checkbox/Checkbox';
+import { ManageFormat } from './ManageFormat/ManageFormat';
 
 export type Product = {
     product: string,
     label: string,
     quantity: number,
     done: boolean,
-    id: string
+    id: string,
+    copies: COPIES
+}
+
+enum FORMAT {
+    ELECTRONIC = 'electronic',
+    PRINTED = 'printed'
+}
+
+enum COPIES {
+    MANY = 'many_copies',
+    SINGLE = 'single_copy'
 }
 
 export interface FormTypeProductProps {
     onClose: () => void;
     confirmFn: (formData: FormData) => void;
     error: boolean;
-    products: { id: string, name: string }[];
+    products: { id: string, name: string, format: FORMAT, copies: COPIES }[];
     selectProducts: Product[] | null;
     selectPhoto: string | null;
+    selectFormatForAll: (id: string, value: boolean, name: string) => void;
+    formatForAll: { id: string, label: string }[];
 }
 
 export type FormData = Record<
     string,
-    { select: boolean; quantity: number; name: string }
+    { quantity: number; name: string; many_copies: COPIES }
 >;
 
-export const FormTypeProduct = ({ onClose, confirmFn, error, products, selectProducts, selectPhoto }: FormTypeProductProps) => {
+export const FormTypeProduct = ({ onClose, confirmFn, error, products, selectProducts, selectPhoto, selectFormatForAll, formatForAll }: FormTypeProductProps) => {
     const [initialValues, setInitialValues] = useState<FormData>();
     const [handleAction, setHandleAction] = useState(false);
 
     useEffect(() => {
-        console.log(selectProducts)
-        console.log(selectPhoto)
         const newValues = products.reduce<FormData>((acc, product) => {
-            acc[product.id] = { select: false, quantity: 0, name: product.name };
+            acc[product.id] = { quantity: 0, name: product.name, many_copies: product.copies };
             return acc;
         }, {});
-
-        console.log(newValues)
 
         if (selectProducts) {
             selectProducts.forEach((selectedProduct) => {
                 if (newValues[selectedProduct.product]) {
                     newValues[selectedProduct.product] = {
-                        select: true,
                         quantity: selectedProduct.quantity,
                         name: selectedProduct.label,
+                        many_copies: newValues[selectedProduct.product].many_copies,
                     };
                 }
             });
         }
-        console.log(newValues, 'новый вальюсы')
         setInitialValues(newValues);
     }, [products, selectProducts, selectPhoto]);
 
@@ -72,25 +79,29 @@ export const FormTypeProduct = ({ onClose, confirmFn, error, products, selectPro
 
     useEffect(() => {
         if (initialValues) {
-            reset(initialValues); // Устанавливаем значения формы
+            reset(initialValues);
         }
     }, [initialValues, reset]);
 
     const formValues = watch();
 
-    const handleChange = (key, value) => {
-        if (value) {
-            setValue(key as keyof FormData, { ...formValues[key], select: value, quantity: 1 });
-        } else setValue(key as keyof FormData, { ...formValues[key], select: value, quantity: 0 });
-        setHandleAction(true);
+
+    const handleChange = (id, value, name) => {
+        selectFormatForAll(id, value, name)
     }
 
     const changeQuantity = (type: 'increment' | 'decrement', field) => {
         const currentQuantity = formValues[field]?.quantity || 0;
-        const newQuantity = type === 'increment' ? currentQuantity + 1 : Math.max(currentQuantity - 1, 1);
+        let newQuantity = currentQuantity;
+        if (formValues[field]?.many_copies === COPIES.MANY) {
+            newQuantity = type === 'increment' ? currentQuantity + 1 : Math.max(currentQuantity - 1, 0);
+        } else {
+            newQuantity = type === 'increment' ? 1 : 0;
+        }
+
         setValue(field, {
             ...formValues[field],
-            quantity: newQuantity
+            quantity: newQuantity,
         });
         setHandleAction(true);
     };
@@ -110,37 +121,49 @@ export const FormTypeProduct = ({ onClose, confirmFn, error, products, selectPro
     if (!error)
         return (
             <form onSubmit={handleSubmit(onSubmit)} autoComplete="off" className={styles.FormTypeProduct}>
-                <h4 className={styles.title}>Печать фото:</h4>
+                <div className={styles.wrapperTitle}>
+                    <h4 className={styles.title}>Печать фото:</h4>
+                    <span>Применить формат ко всем выбранным фото</span>
+                </div>
                 <div className={styles.checkboxes}>
-                    {products.map((item, index) => (
-                        <Controller
-                            key={index}
-                            name={item.id as keyof FormData}
-                            control={control}
-                            render={({ field }) => (
-                                <label className={styles.Label} key={index}>
-                                    <span className={styles.labelCheckbox}>{item.name}</span>
-                                    <div className={styles.wrapperManage}>
-                                        <div className={`${styles.wrapperBtn} ${formValues[item.id]?.select ? styles.visible : ''}`}>
-                                            <button type='button' className={styles.btnMinus}
-                                                onClick={() => changeQuantity('decrement', item.id)}>-</button>
-                                            <div className={styles.quantity}>
-                                                {field.value?.quantity ?? 0}
-                                            </div>
-                                            <button type='button' className={styles.btnPlus} onClick={() => changeQuantity('increment', item.id)}>+</button>
-                                        </div>
-                                        <CheckboxCustom
-                                            id={item.id}
-                                            value={field.value?.select ?? false}
-                                            onToggle={handleChange}
-                                        />
+                    {products.map((item, index) => {
+                        if (item.format !== FORMAT.PRINTED) {
+                            return null;
+                        }
+                        return (
+                            <Controller
+                                key={index}
+                                name={item.id as keyof FormData}
+                                control={control}
+                                render={({ field }) => (
+                                    <ManageFormat handleChange={handleChange}
+                                        changeQuantity={changeQuantity} index={index}
+                                        item={item} valueQuantity={field.value?.quantity}
+                                        valueFormatAll={formatForAll.some(el => el.id == item.id)}
+                                    />
+                                )}
+                            />
+                        );
+                    })}
+                    {products.map((item, index) => {
+                        if (item.format == FORMAT.ELECTRONIC) {
+                            return (
+                                <Controller
+                                    key={index}
+                                    name={item.id as keyof FormData}
+                                    control={control}
+                                    render={({ field }) => (
+                                        <ManageFormat changeQuantity={changeQuantity}
+                                            handleChange={handleChange} index={index}
+                                            item={item} valueQuantity={field.value?.quantity}
+                                            valueFormatAll={formatForAll.some(el => el.id == item.id)}
+                                            bold={true} />
+                                    )}
+                                />
+                            )
+                        }
 
-                                    </div>
-
-                                </label>
-                            )}
-                        />
-                    ))}
+                    })}
                 </div>
                 <div className={styles.btnLink}>
                     <ButtonSecondary text='Подтвердить' width={352} type='submit'

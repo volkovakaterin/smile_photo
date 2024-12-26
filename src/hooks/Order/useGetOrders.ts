@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { stringify } from 'qs-esm'
 
-const limit = 100000;
+const limit = 1000000;
+
+const url = process.env.NEXT_PUBLIC_SERVER_URL;
 
 export const getOrders = async (status?: string | string[], phone?: string): Promise<Response> => {
     const query: any = {};
@@ -25,8 +27,7 @@ export const getOrders = async (status?: string | string[], phone?: string): Pro
         },
         { addQueryPrefix: true },
     )
-    const response = await axios.get<Response>(`http://localhost:3000/api/orders${stringifiedQuery}`);
-    console.log(response.data);
+    const response = await axios.get<Response>(`${url}/api/orders${stringifiedQuery}`);
     return response.data;
 };
 

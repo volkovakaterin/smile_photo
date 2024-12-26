@@ -1,12 +1,13 @@
 .SlidePreview {
   position: relative;
+  display: flex;
+  justify-content: center;
   width: 100%;
   height: calc(100vh - 40px);
   background-color: #d9d9d9;
 
   & .image {
     object-fit: contain;
-    top: 40px;
   }
 }
 .wrapperBtn {
@@ -18,14 +19,27 @@
 
 .photoName {
   position: absolute;
-  bottom: 0;
+  bottom: 10px;
   left: 0;
   text-align: center;
   width: 100%;
+  z-index: 10;
 }
 
 .sliderItem {
   position: relative;
-  height: calc(100% - 80px);
+  display: flex;
+  justify-content: center;
+  height: 100%;
+}
+
+.load {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

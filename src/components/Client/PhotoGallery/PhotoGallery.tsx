@@ -20,8 +20,9 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useProducts } from '@/hooks/Products/useGetProducts';
 import axios from 'axios';
 import { SliderPhotoProductType } from '../SliderPhotoProductType/SliderPhotoProductType';
+import { useFunctionalMode } from '@/providers/FunctionalMode';
 
-const limit = 20;
+const limit = 40;
 
 interface PhotoGalleryProps {
     folderPath: string;
@@ -35,18 +36,18 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
     const [showTypeProduct, setShowTypeProduct] = useState(false);
     const [showOpenOrder, setShowOpenOrder] = useState(false);
     const queryClient = useQueryClient();
-    const { orderId, setOrderId, basketProducts, setBasketProducts, quantityProducts, setQuantityProducts } = useOrder();
+    const { orderId, setOrderId, setBasketProducts, setQuantityProducts, directories, handleSetFormatForAll, formatForAll } = useOrder();
     const [error, setError] = useState(false);
     const [selectPhoto, setSelectPhoto] = useState<string | null>(null);
     const { order } = useOrderId(orderId);
-    const { mutate, isPending, isError, isSuccess } = useCreateOrder();
-    const { handleDeletePhoto, handleAddPhotoOrder, editOrder } = useEditOrder();
+    const { mutate } = useCreateOrder();
+    const { handleDeletePhoto, editOrder, applyFormatAllPhotos, addPhotoByMarkedFormatsForAll, handleAddPhotoOrder } = useEditOrder();
     const { products } = useProducts();
     const [containerWidth, setContainerWidth] = useState(0);
     const [columns, setColumns] = useState(1);
     const columnPercent = 19; // Ширина колонки в процентах
-    const { directories } = useOrder();
     const [currentImageProducts, setCurrentImageProducts] = useState(null);
+    const { mode } = useFunctionalMode();
 
     async function fetchImages({ pageParam = 0, folderPath }) {
         const photosDirectory = directories.photos;
@@ -80,29 +81,13 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
     const allImages = data ? data.pages.flatMap((page) => page.rows) : [];
     const parentRef = useRef<HTMLDivElement>(null);
 
-    const rowVirtualizer = useVirtualizer({
-        count: Math.ceil(allImages.length / columns), // Число строк
-        getScrollElement: () => parentRef.current,
-        estimateSize: () => 187, // Высота строки
-        overscan: 0,
-    });
-
-    const columnVirtualizer = useVirtualizer({
-        horizontal: true,
-        count: columns, // Динамическое количество колонок
-        getScrollElement: () => parentRef.current,
-        estimateSize: () => containerWidth * (columnPercent / 100), // Динамическая ширина колонки
-        overscan: 0,
-    });
-
     useEffect(() => {
         const updateColumns = () => {
             if (parentRef.current) {
-                const width = parentRef.current.offsetWidth;
+                const width = parentRef.current.clientWidth;
                 setContainerWidth(width);
-                // Рассчитываем количество колонок, учитывая ширину одной колонки и промежутки
                 const calculatedColumns = Math.floor(width / (width * (columnPercent / 100)));
-                setColumns(Math.max(1, calculatedColumns)); // Минимум одна колонка
+                setColumns(Math.max(1, calculatedColumns));
             }
         };
 
@@ -113,6 +98,21 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
 
         return () => resizeObserver.disconnect();
     }, [columnPercent]);
+
+    const rowVirtualizer = useVirtualizer({
+        count: Math.ceil(allImages.length / columns),
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 187,
+        overscan: 0,
+    });
+
+    const columnVirtualizer = useVirtualizer({
+        horizontal: true,
+        count: columns,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => containerWidth * (columnPercent / 100),
+        overscan: 0,
+    });
 
     useEffect(() => {
         const [lastItem] = [...rowVirtualizer.getVirtualItems()].reverse();
@@ -133,21 +133,30 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
 
     useEffect(() => {
         if (!order) { return }
-        console.log('обновляем заказ для корзины')
-        const orderForBasket = basketProductsFn(order.images);
-        setBasketProducts(orderForBasket);
-        setQuantityProducts(totalQuantityFn(orderForBasket));
+        if (mode == 'with_formats') {
+            const orderForBasket = basketProductsFn(order.images);
+            setBasketProducts(orderForBasket);
+            setQuantityProducts(totalQuantityFn(orderForBasket));
+            const products = order.images.find((item) => item.image === selectPhoto);
+            setCurrentImageProducts(products ? products.products : null);
+        } else {
+            setQuantityProducts(order.images.length)
+        }
+
     }, [order])
 
     const handleCreateOrder = (formData) => {
-        console.log('handleCreateOrder')
         const body = { tel_number: formData.phone.replace(/\s+/g, '') }
         mutate(body, {
             onSuccess: (data: any) => {
-                console.log('Заказ успешно открыт:', data);
                 setShowOpenOrder(false);
                 setOrderId(data.doc.id);
-                setShowTypeProduct(true);
+                if (mode == 'with_formats') {
+                    setShowTypeProduct(true);
+                } else {
+                    handleAddPhotoOrder(data.doc.id, selectPhoto);
+                    setSelectPhoto(null);
+                }
                 queryClient.invalidateQueries({ queryKey: ['add order'] });
             },
             onError: (error) => {
@@ -172,9 +181,17 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
                 handleDeletePhoto(element, orderId, order)
                 setActiveSlideTypeProduct(null);
             } else {
-                setSelectPhoto(element);
-                setActiveSlideTypeProduct(index);
-                setShowTypeProduct(true);
+                if (mode == 'with_formats') {
+                    if (formatForAll.length) {
+                        addPhotoByMarkedFormatsForAll(formatForAll, orderId, order, element)
+                    }
+                    setSelectPhoto(element);
+                    setCurrentImageProducts(null);
+                    setActiveSlideTypeProduct(index);
+                    setShowTypeProduct(true);
+                } else {
+                    handleAddPhotoOrder(orderId, element, order)
+                }
             }
         }
     }
@@ -182,10 +199,16 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
     const switchSelectePhoto = (image) => {
         setSelectPhoto(image);
         const products = order.images.find((item) => item.image === image);
-        console.log(products)
         setCurrentImageProducts(products ? products.products : null);
     }
 
+
+    const selectFormatForAll = (id, value, format) => {
+        handleSetFormatForAll(id, format);
+        if (value) {
+            applyFormatAllPhotos({ id, format }, orderId, order, selectPhoto)
+        }
+    }
 
 
     const closeTypeProduct = () => {
@@ -215,7 +238,7 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
             <div className={styles.wrapperImages} ref={parentRef}
                 style={{
                     height: 'calc(100vh - 240px)',
-                    overflow: 'auto',
+                    overflowY: 'scroll',
                     position: 'relative',
                 }}>
                 <div className={styles.wrapperImagesFlex} style={{
@@ -237,12 +260,13 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
                                             position: 'absolute',
                                             top: 0,
                                             left: 0,
-                                            width: `${containerWidth * (columnPercent / 100)}px`, // Ширина колонки
+                                            width: `${containerWidth * (columnPercent / 100)}px`,
                                             height: `${virtualRow.size}px`,
 
                                             transform: `translateX(${virtualColumn.start +
                                                 (virtualColumn.index > 0 ? (containerWidth * 0.0125 * virtualColumn.index) : 0)}px) 
                                             translateY(${virtualRow.start}px)`,
+
                                         }}
                                     >
                                         {!photoNone && (
@@ -276,9 +300,9 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
                             switchSelectePhoto={switchSelectePhoto}
                             selectPhotos={order?.images ?? []} dir={directories.photos} />
                         </div>}
-                    <FormTypeProduct onClose={closeTypeProduct}
+                    <FormTypeProduct onClose={closeTypeProduct} selectFormatForAll={selectFormatForAll}
                         confirmFn={addPhotoOrder} error={false} products={products.docs}
-                        selectProducts={currentImageProducts} selectPhoto={selectPhoto} />
+                        selectProducts={currentImageProducts} selectPhoto={selectPhoto} formatForAll={formatForAll} />
                 </TheModal>,
                 document.body
             )}

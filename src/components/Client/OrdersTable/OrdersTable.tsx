@@ -1,22 +1,7 @@
 'use client'
 
-import React, { useState } from "react";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Typography,
-    Collapse,
-    IconButton,
-    Select,
-    MenuItem,
-    Button,
-    Checkbox,
-} from "@mui/material";
+import React, { useState, memo, useEffect } from "react";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Collapse, IconButton, Select, MenuItem, Button, Checkbox } from "@mui/material";
 import { ExpandLess, ExpandMore, Delete, BorderColor, Save, CloudDownload, DoneAll } from "@mui/icons-material";
 import { useStatusChangeOrder } from "@/hooks/Order/useChangeStatusOrder";
 import { useDeleteOrder } from "@/hooks/Order/useDeleteOrder";
@@ -24,10 +9,13 @@ import Image from 'next/image';
 import styles from './OrdersTable.module.scss';
 import { useEditOrder } from "@/hooks/Order/useEditPhoto";
 import path from 'path';
-import axios from 'axios';
 import { useOrder } from "@/providers/OrderProvider";
+import { downloadArchive } from "./services/downloadArchive";
+import { savePhoto } from "./services/savePhoto";
+import { SelectProducts } from "../SelectProducts/SelectProducts";
+import { useProducts } from "@/hooks/Products/useGetProducts";
 
-type Product = {
+export type Product = {
     id: string;
     product: string;
     quantity: number;
@@ -55,64 +43,15 @@ type OrdersTableProps = {
     orders: Order[];
 };
 
-const downloadArchive = async (orderId, order, dir) => {
-    console.log(orderId)
-    try {
-        const response = await axios.post('/api/create-archive', null, {
-            params: { order: order, dir: dir },
-        });
-
-        if (response.status == 200) {
-            alert('Архив успешно создан')
-        } else {
-            alert('Ошибка при создании архива');
-        }
-    } catch (error) {
-        console.error('Ошибка при запросе:', error);
-        alert('Не удалось создать архив');
-    }
-};
-
-async function savePhoto(imagePath, imageName) {
-    try {
-        console.log(imagePath, imageName);
-
-        const response = await axios.post(
-            '/api/save-photo',
-            { params: { imagePath, imageName } },
-            { responseType: 'blob' }
-        );
-        const contentDisposition = response.headers['content-disposition'];
-        let fileName = 'output.jpeg';
-
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename="(.+)"/);
-            if (match && match[1]) {
-                fileName = match[1];
-            }
-        }
-        const blob = new Blob([response.data], { type: response.headers['content-type'] });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName; // Имя загружаемого файла
-        a.click();
-        window.URL.revokeObjectURL(url);
-    } catch (error) {
-        console.error('Error saving photo:', error.message);
-    }
-}
-
-
-
-const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
+const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
     const { handleChangeStatusOrder } = useStatusChangeOrder();
     const { mutate: deleteOrder } = useDeleteOrder();
     const { handleDeletePhoto, handleDeleteProduct, handleEditQuantityProduct,
-        handleCompletedProducts, handleCompletedAllProducts, handleElectronicFrame } = useEditOrder();
-    const [editingProduct, setEditingProduct] = useState<{ id: string; quantity: number, label: string } | null>(null);
+        handleCompletedProducts, handleCompletedAllProducts, handleElectronicFrame, addFormatOnePhoto } = useEditOrder();
+    const [editingProduct, setEditingProduct] = useState<{ id: string; quantity: number | string, label: string } | null>(null);
     const { directories } = useOrder();
+    const { products } = useProducts();
 
     const handleDownloadProduct = (orderId: string, order) => {
         downloadArchive(orderId, order, directories);
@@ -134,8 +73,9 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
 
     const saveQuantity = (image: string, orderId: string, order, product: Product) => {
         if (editingProduct) {
-            console.log(orderId, order, { image: image, product }, editingProduct.quantity)
-            handleEditQuantityProduct(orderId, order, { image: image, label: product.label, quantity: product.quantity }, editingProduct.quantity);
+            if (typeof editingProduct.quantity == 'number' && editingProduct.quantity > 0) {
+                handleEditQuantityProduct(orderId, order, { image: image, label: product.label, quantity: product.quantity }, editingProduct.quantity);
+            }
             setEditingProduct(null);
         }
     };
@@ -169,6 +109,12 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
             alert('Статус не изменён,есть неготовые товары');
         }
     };
+
+    const handleSelectionChange = (selectedProducts: { name: string; id: string | undefined }, orderId, order, selectPhoto) => {
+        addFormatOnePhoto(selectedProducts, orderId, order, selectPhoto)
+    };
+
+
 
     return (
         <TableContainer component={Paper}>
@@ -216,7 +162,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                         <Delete />
                                     </IconButton>
                                 </TableCell>
-                                {/* <TableCell>
+                                <TableCell>
                                     <IconButton
                                         color="info"
                                         onClick={() => handleDownloadProduct(order.id, order)}
@@ -224,7 +170,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                         <CloudDownload />
 
                                     </IconButton>
-                                </TableCell> */}
+                                </TableCell>
                                 <TableCell>
                                     <IconButton
                                         color="success"
@@ -257,7 +203,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                                                                 alt={'photo'} width={212}
                                                                                 height={114}
                                                                                 className={styles.image} />
-                                                                            <div className={styles.photoName}>{path.parse(image.image).name}</div>
+                                                                            <span className={styles.photoName}>{path.parse(image.image).name}</span>
                                                                         </Typography>
                                                                         <Button
                                                                             variant="outlined"
@@ -269,151 +215,157 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                                                         >Удалить фото
                                                                         </Button>
                                                                     </div>
-
+                                                                    {products && <SelectProducts products={products.docs} selectProducts={image.products}
+                                                                        onSelectionChange={(format) => handleSelectionChange(format, order.id, order, image.image)} />}
                                                                 </TableCell>
-                                                                <TableCell>
-                                                                    <div className={styles.wrapperProducts}>
-                                                                        <Typography>
-                                                                            <strong>Товары:</strong>
-                                                                        </Typography>
-                                                                        <ul className={styles.product}>
-                                                                            {image.products.map((product) => (
-                                                                                <li key={product.id} className={styles.itemList}>
-                                                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                                                        <span>{product.label}</span>
-                                                                                    </div>
+                                                                {image.products.length ?
+                                                                    <>
+                                                                        <TableCell>
+                                                                            <div className={styles.wrapperProducts}>
+                                                                                <Typography>
+                                                                                    <strong>Товары:</strong>
+                                                                                </Typography>
+                                                                                <ul className={styles.product}>
+                                                                                    {image.products.filter((product) => product.id).map((product) => (
+                                                                                        <li key={product.id} className={styles.itemList}>
+                                                                                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                                                                <span>{product.label}</span>
+                                                                                            </div>
 
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <div className={styles.wrapperProducts}>
-                                                                        <Typography>
-                                                                            <strong>Эл.р:</strong>
-                                                                        </Typography>
-                                                                        <ul className={styles.electronicFrame}>
-                                                                            {image.products.map((product) => (
-                                                                                <li key={product.id} className={styles.itemList}>
-                                                                                    <Checkbox
-                                                                                        checked={product.electronic_frame || false}
-                                                                                        onChange={() => toggleFrame(order.id, order, product, image.image)}
-                                                                                        color="secondary"
-                                                                                        sx={{
-                                                                                            padding: "0px",
-                                                                                        }}
-                                                                                    />
-                                                                                </li>
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            <div className={styles.wrapperProducts}>
+                                                                                <Typography>
+                                                                                    <strong>Эл.р:</strong>
+                                                                                </Typography>
+                                                                                <ul className={styles.electronicFrame}>
+                                                                                    {image.products.filter((product) => product.id).map((product) => (
+                                                                                        <li key={product.id} className={styles.itemList}>
+                                                                                            <Checkbox
+                                                                                                checked={product.electronic_frame || false}
+                                                                                                onChange={() => toggleFrame(order.id, order, product, image.image)}
+                                                                                                color="secondary"
+                                                                                                sx={{
+                                                                                                    padding: "0px",
+                                                                                                }} />
+                                                                                        </li>
 
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <div className={styles.productDetail}>
-                                                                        <Typography>
-                                                                            <strong>Кол-во:</strong>
-                                                                        </Typography>
-                                                                        <ul className={styles.productQuantity}>
-                                                                            {image.products.map((product) => (
-                                                                                <li key={product.id} className={styles.itemList}>
-                                                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                                                        {editingProduct?.id === product.id ? (
-                                                                                            <>
-                                                                                                <input
-                                                                                                    type="number"
-                                                                                                    value={editingProduct.quantity}
-                                                                                                    onChange={(e) =>
-                                                                                                        setEditingProduct({
-                                                                                                            id: product.id,
-                                                                                                            label: product.label,
-                                                                                                            quantity: Number(e.target.value),
-                                                                                                        })
-                                                                                                    }
-                                                                                                    style={{ width: "60px", border: "1px solid gray" }}
-                                                                                                />
-                                                                                                <Button
-                                                                                                    variant="contained"
-                                                                                                    color="primary"
-                                                                                                    size="small"
-                                                                                                    startIcon={<Save />}
-                                                                                                    onClick={() => saveQuantity(image.image, order.id, order, product)}
-                                                                                                    sx={{
-                                                                                                        minWidth: "auto",
-                                                                                                        fontSize: '12px',
-                                                                                                        padding: "2px 6px",
-                                                                                                        "& .MuiButton-startIcon": { margin: 0 },
-                                                                                                    }}
-                                                                                                >
-                                                                                                </Button>
-                                                                                            </>
-                                                                                        ) : (
-                                                                                            <>
-                                                                                                <span>{product.quantity}</span>
-                                                                                                <Button
-                                                                                                    variant="outlined"
-                                                                                                    color="secondary"
-                                                                                                    size="small"
-                                                                                                    startIcon={<BorderColor />}
-                                                                                                    onClick={() => startEditing(product)}
-                                                                                                    sx={{
-                                                                                                        minWidth: "auto",
-                                                                                                        fontSize: '12px',
-                                                                                                        padding: "2px 6px",
-                                                                                                        "& .MuiButton-startIcon": { margin: 0 },
-                                                                                                    }}
-                                                                                                >
-                                                                                                </Button>
-                                                                                            </>
-                                                                                        )}
-                                                                                    </div>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            <div className={styles.productDetail}>
+                                                                                <Typography>
+                                                                                    <strong>Кол-во:</strong>
+                                                                                </Typography>
+                                                                                <ul className={styles.productQuantity}>
+                                                                                    {image.products.filter((product) => product.id).map((product) => (
+                                                                                        <li key={product.id} className={styles.itemList}>
+                                                                                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                                                                {(editingProduct && editingProduct?.id === product.id) ? (
+                                                                                                    <>
+                                                                                                        <input
+                                                                                                            type="number"
+                                                                                                            value={editingProduct.quantity}
+                                                                                                            onChange={(e) => {
+                                                                                                                const value = e.target.value;
+                                                                                                                setEditingProduct({
+                                                                                                                    id: product.id,
+                                                                                                                    label: product.label,
+                                                                                                                    quantity: value === '' ? '' : Number(value),
+                                                                                                                })
+                                                                                                            }}
+                                                                                                            style={{ width: "60px", border: "1px solid gray" }} />
+                                                                                                        <Button
+                                                                                                            variant="contained"
+                                                                                                            color="primary"
+                                                                                                            size="small"
+                                                                                                            startIcon={<Save />}
+                                                                                                            onClick={() => saveQuantity(image.image, order.id, order, product)}
+                                                                                                            sx={{
+                                                                                                                minWidth: "auto",
+                                                                                                                fontSize: '12px',
+                                                                                                                padding: "2px 6px",
+                                                                                                                "& .MuiButton-startIcon": { margin: 0 },
+                                                                                                            }}
+                                                                                                        >
+                                                                                                        </Button>
+                                                                                                    </>
+                                                                                                ) : (
+                                                                                                    <>
+                                                                                                        <span>{product.quantity}</span>
+                                                                                                        <Button
+                                                                                                            variant="outlined"
+                                                                                                            color="secondary"
+                                                                                                            size="small"
+                                                                                                            startIcon={<BorderColor />}
+                                                                                                            onClick={() => startEditing(product)}
+                                                                                                            sx={{
+                                                                                                                minWidth: "auto",
+                                                                                                                fontSize: '12px',
+                                                                                                                padding: "2px 6px",
+                                                                                                                "& .MuiButton-startIcon": { margin: 0 },
+                                                                                                            }}
+                                                                                                        >
+                                                                                                        </Button>
+                                                                                                    </>
+                                                                                                )}
+                                                                                            </div>
 
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <div className={styles.productDetail}>
-                                                                        <Typography>
-                                                                            <strong>Управление:</strong>
-                                                                        </Typography>
-                                                                        <ul className={styles.productQuantity}>
-                                                                            {image.products.map((product) => (
-                                                                                <li key={product.id} className={styles.itemList}>
-                                                                                    <Button
-                                                                                        variant="outlined"
-                                                                                        color="error"
-                                                                                        size="small"
-                                                                                        startIcon={<Delete />}
-                                                                                        onClick={() => handleDeleteProduct(image.image, order.id, order, { product: product.label })}
-                                                                                        sx={{
-                                                                                            minWidth: "auto",
-                                                                                            fontSize: '12px',
-                                                                                            padding: "2px 6px",
-                                                                                            "& .MuiButton-startIcon": { margin: 0 },
-                                                                                        }}
-                                                                                    >
-                                                                                    </Button>
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            <div className={styles.productDetail}>
+                                                                                <Typography>
+                                                                                    <strong>Управление:</strong>
+                                                                                </Typography>
+                                                                                <ul className={styles.productQuantity}>
+                                                                                    {image.products.filter((product) => product.id).map((product) => (
+                                                                                        <li key={product.id} className={styles.itemList}>
+                                                                                            <Button
+                                                                                                variant="outlined"
+                                                                                                color="error"
+                                                                                                size="small"
+                                                                                                startIcon={<Delete />}
+                                                                                                onClick={() => handleDeleteProduct(image.image, order.id, order, { product: product.label })}
+                                                                                                sx={{
+                                                                                                    minWidth: "auto",
+                                                                                                    fontSize: '12px',
+                                                                                                    padding: "2px 6px",
+                                                                                                    "& .MuiButton-startIcon": { margin: 0 },
+                                                                                                }}
+                                                                                            >
+                                                                                            </Button>
 
-                                                                                    <Checkbox
-                                                                                        checked={product.done || false}
-                                                                                        onChange={() => toggleCompleted(order.id, order, product, image.image)}
-                                                                                        color="primary"
-                                                                                        sx={{
-                                                                                            padding: "0px",
-                                                                                        }}
-                                                                                    />
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
+                                                                                            <Checkbox
+                                                                                                checked={product.done || false}
+                                                                                                onChange={() => toggleCompleted(order.id, order, product, image.image)}
+                                                                                                color="primary"
+                                                                                                sx={{
+                                                                                                    padding: "0px",
+                                                                                                }} />
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
 
 
-                                                                    </div>
-                                                                </TableCell>
-                                                            </TableRow>
-                                                            <TableRow>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                    </>
+                                                                    :
+                                                                    <TableCell>
+                                                                        <div className={styles.wrapperNoProducts}><span>Нет выбранных товаров</span>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                }
                                                             </TableRow>
                                                         </React.Fragment>
                                                     ))}
@@ -429,14 +381,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                 </TableBody>
             </Table>
         </TableContainer>
-        //  {showTypeProduct && createPortal(
-        //     <TheModal open={showTypeProduct} handleClose={closeTypeProduct}>
-        //         <FormTypeProduct onClose={() => setShowTypeProduct(false)}
-        //             confirmFn={addPhotoOrder} error={false} products={products.docs} />
-        //     </TheModal>,
-        //     document.body
-        // )}
     );
-};
+});
 
 export default OrdersTable;

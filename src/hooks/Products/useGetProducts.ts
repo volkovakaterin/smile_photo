@@ -4,6 +4,7 @@ import axios from 'axios';
 import { stringify } from 'qs-esm'
 
 const limit = 100000;
+const url = process.env.NEXT_PUBLIC_SERVER_URL;
 
 export const getProducts = async (): Promise<Response> => {
     const stringifiedQuery = stringify(
@@ -12,8 +13,7 @@ export const getProducts = async (): Promise<Response> => {
         },
         { addQueryPrefix: true },
     )
-    const response = await axios.get<Response>(`http://localhost:3000/api/products${stringifiedQuery}`);
-    console.log(response.data);
+    const response = await axios.get<Response>(`${url}/api/products${stringifiedQuery}`);
     return response.data;
 };
 

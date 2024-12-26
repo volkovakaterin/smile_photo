@@ -31,6 +31,7 @@ const FormSearchOrder = ({ onSearchByPhone }: FormSearchOrderProps) => {
 
     const handleKeyboardPress = (key: string) => {
         const currentValue = watch('phone') || '+7';
+        if (key === '+') return;
         if (key === 'delete') {
             setValue('phone', currentValue.slice(0, -1));
         } else {
@@ -39,7 +40,6 @@ const FormSearchOrder = ({ onSearchByPhone }: FormSearchOrderProps) => {
     };
 
     const onSubmit = (data: FormData) => {
-        console.log('Submitted Data:', data);
         setShowKeyboard(false);
         onSearchByPhone(data.phone);
     };

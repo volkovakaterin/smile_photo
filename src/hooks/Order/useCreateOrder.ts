@@ -7,9 +7,10 @@ export interface OrderData {
     tel_number: string,
 }
 
+const url = process.env.NEXT_PUBLIC_SERVER_URL
+
 export const createOrder = async (orderData: OrderData): Promise<Response> => {
-    const response = await axios.post<Response>('http://localhost:3000/api/orders', orderData);
-    console.log(response.data);
+    const response = await axios.post<Response>(`${url}/api/orders`, orderData);
     return response.data;
 };
 

@@ -6,30 +6,41 @@ import { ProductBasketType } from '@/app/(frontend)/basket/page';
 
 
 interface ProductBasketProps {
-    images: string[];
     toggleSelect: (element: string, select: boolean) => void;
     checkSelectPhoto: (element: any) => boolean;
     selectPhotos: string[];
-    product: ProductBasketType;
-    onOpen: (photoProduct: { image: string, quantity: number }) => void;
+    product?: ProductBasketType;
+    onOpen?: (photoProduct: { image: string, quantity: number }) => void;
     dir: string
+    openPreviewModal?: (image: string) => void;
+    images?: { image: string; quantity: number }[];
+    mode: string;
 }
 
 
-const ProductBasket = ({ toggleSelect, checkSelectPhoto, selectPhotos, product, onOpen, dir }: ProductBasketProps) => {
+const ProductBasket = ({ toggleSelect, checkSelectPhoto, selectPhotos, product, onOpen, dir, openPreviewModal, images, mode }: ProductBasketProps) => {
+    const [cards, setCards] = useState<{ image: string }[] | { image: string; quantity: number }[]>([]);
 
+    useEffect(() => {
+        if (mode == 'with_formats' && product) {
+            setCards(product.photos)
+        } else if (images) { setCards(images) }
+    },
+        [images, product])
 
     return (
         <div className={styles.ProductBasket}>
-            <span className={styles.title}>{product.product}</span>
+            {product && <span className={styles.title}>{product.product}</span>}
             <div className={styles.wrapperPhoto}>
-                {product.photos.map((image, index) => (
+                {cards.map((image, index) => (
                     <PhotoCard key={index} fromBasket={true} image={image.image}
                         quantity={image.quantity}
                         index={index} toggleSelect={toggleSelect}
                         checkSelectPhoto={checkSelectPhoto}
                         selectPhotos={selectPhotos}
-                        onOpen={() => onOpen(image)} dir={dir}></PhotoCard>))}
+                        onOpen={onOpen ? () => onOpen(image) : undefined}
+                        openPreviewModal={openPreviewModal}
+                        dir={dir}></PhotoCard>))}
             </div>
         </div>
     );

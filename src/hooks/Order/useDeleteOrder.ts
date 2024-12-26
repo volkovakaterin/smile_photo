@@ -4,8 +4,10 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useQueryClient } from "@tanstack/react-query";
 import axios from 'axios';
 
+const url = process.env.NEXT_PUBLIC_SERVER_URL
+
 export const deleteOrder = async (id: string): Promise<Response> => {
-    const response = await axios.delete<Response>(`http://localhost:3000/api/orders/${id}`);
+    const response = await axios.delete<Response>(`${url}/api/orders/${id}`);
     return response.data;
 };
 

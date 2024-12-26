@@ -3,7 +3,6 @@ import path from 'path';
 import payload from 'payload';
 
 const processFolders = async () => {
-    console.log('Запуск процесса обработки папок...');
     const papka = await payload.find({
         collection: 'directories',
         where: {
@@ -23,9 +22,7 @@ const processFolders = async () => {
                 const currentPath = path.join(directory, item.name);
                 const relativePath = path.relative(photosDirectory, path.dirname(currentPath)); // Путь с корневой папкой, исключая саму папку
 
-                console.log(`Обнаружена папка: ${item.name}`);
                 try {
-                    // Проверяем наличие записи в базе для текущей папки
                     const existingFolder = await payload.find({
                         collection: 'folders',
                         where: {
@@ -35,20 +32,16 @@ const processFolders = async () => {
                     });
 
                     if (existingFolder.docs.length > 0) {
-                        console.log(`Папка ${item.name} уже существует в базе.`);
                     } else {
-                        // Добавляем текущую папку в базу
                         await payload.create({
                             collection: 'folders',
                             data: {
-                                name: item.name, // Название папки
-                                path: relativePath, // Полный путь с корнем
+                                name: item.name,
+                                path: relativePath,
                             },
                         });
-                        console.log(`Папка ${item.name} успешно добавлена в базу.`);
                     }
 
-                    // Рекурсивно обрабатываем подкаталоги
                     await traverseDirectory(currentPath);
                 } catch (error) {
                     console.error(`Ошибка при обработке папки ${item.name}:`, error);
@@ -58,7 +51,6 @@ const processFolders = async () => {
     };
 
     await traverseDirectory(photosDirectory);
-    console.log('Процесс обработки папок завершён.');
 };
 
 export default processFolders;

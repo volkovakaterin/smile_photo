@@ -12,9 +12,12 @@ interface OrderContextType {
     setQuantityProducts: (quantity: number) => void;
     mode: string;
     setMode: (value: TYPE_MODE) => void;
-    directories: { archives: string, photos: string };
-    setDirectories: (value: { archives: string, photos: string }) => void;
+    directories: { photos: string };
+    setDirectories: (value: { photos: string }) => void;
     resetOrder: () => void;
+    formatForAll: { id: string, label: string }[],
+    setFormatForAll: (format: { id: string, label: string }[] | []) => void;
+    handleSetFormatForAll: (id: string, label: string) => void;
 }
 
 export enum TYPE_MODE {
@@ -29,22 +32,37 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     const [basketProducts, setBasketProducts] = useState<[] | null>(null);
     const [quantityProducts, setQuantityProducts] = useState(0);
     const [mode, setMode] = useState(TYPE_MODE.CREAT);
-    const [directories, setDirectories] = useState({ archives: '', photos: '' });
+    const [directories, setDirectories] = useState({ photos: '' });
+    const [formatForAll, setFormatForAll] = useState<{ id: string, label: string }[]>([]);
+    const url = process.env.NEXT_PUBLIC_SERVER_URL
 
     const resetOrder = () => {
         setOrderId(null);
         setBasketProducts(null);
         setQuantityProducts(0);
         setMode(TYPE_MODE.CREAT);
+        setFormatForAll([]);
     };
+
+    const handleSetFormatForAll = (id: string, label: string) => {
+        let newArr = [...formatForAll];
+        const exists = newArr.some(item => item.id === id);
+
+        if (exists) {
+            newArr = newArr.filter(item => item.id !== id);
+        } else {
+            newArr.push({ id, label });
+        }
+        setFormatForAll(newArr);
+    };
+
 
     useEffect(() => {
         const fetchDirectories = async () => {
             try {
-                const response = await axios.get('http://localhost:3000/api/directories');
-                const archives = response.data.docs.find((item: any) => item.service_name === 'archives_directory')?.path || '';
+                const response = await axios.get(`${url}/api/directories`);
                 const photos = response.data.docs.find((item: any) => item.service_name === 'photo_directory')?.path || '';
-                setDirectories({ archives, photos });
+                setDirectories({ photos });
             } catch (error) {
                 console.error('Failed to fetch directories:', error);
             }
@@ -53,10 +71,12 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
         fetchDirectories();
     }, []);
 
+
     return (
         <OrderContext.Provider value={{
             orderId, setOrderId, basketProducts, setBasketProducts,
-            quantityProducts, setQuantityProducts, mode, setMode, directories, setDirectories, resetOrder
+            quantityProducts, setQuantityProducts, mode, setMode, directories,
+            setDirectories, resetOrder, formatForAll, setFormatForAll, handleSetFormatForAll
         }}>
             {children}
         </OrderContext.Provider>

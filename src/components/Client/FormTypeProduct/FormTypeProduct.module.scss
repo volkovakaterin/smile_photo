@@ -2,6 +2,17 @@
 
 .FormTypeProduct {
   margin-top: 20px;
+  .wrapperTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+
+    & span {
+      width: 70px;
+      font-size: 13px;
+      text-align: center;
+    }
+  }
   .title {
     font-weight: 600;
   }
@@ -11,53 +22,6 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-  }
-
-  .Label {
-    padding: 0 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .Label:not(:last-of-type) {
-    padding-bottom: 5px;
-    border-bottom: 1px solid black;
-  }
-
-  .wrapperManage {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .wrapperBtn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    opacity: 0;
-
-    &.visible {
-      opacity: 1;
-    }
-  }
-
-  .btnPlus,
-  .btnMinus {
-    font-size: 20px;
-    line-height: 24px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .quantity {
-    background-color: $MainWhite;
-    border: 1px solid #000;
-    width: 28px;
-    padding: 1px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .btnLink {

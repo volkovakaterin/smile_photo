@@ -38,8 +38,10 @@
       display: block;
       width: 14px;
       height: 14px;
-      background-color: $MainBlack;
       opacity: 0;
+      &.visible {
+        opacity: 1;
+      }
     }
   }
 

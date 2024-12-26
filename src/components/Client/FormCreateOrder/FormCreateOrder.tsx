@@ -1,12 +1,11 @@
 'use client';
 
-import { ReactNode, memo, useState } from 'react';
+import { memo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styles from './FormCreateOrder.module.scss';
-import { MuiTelInput, matchIsValidTel } from 'mui-tel-input';
+import { matchIsValidTel } from 'mui-tel-input';
 import { InputPhone, TYPE_INPUT } from '../UI/InputPhone/InputPhone';
 import { ButtonSecondary } from '../UI/ButtonSecondary/ButtonSecondary';
-import Link from 'next/link';
 import { KeyboardNumbers } from '@/components/KeyboardNumbers/KeyboardNumbers';
 
 interface FormCreateOrderProps {
@@ -35,6 +34,7 @@ export const FormCreateOrder = memo(({ confirmFn, error }: FormCreateOrderProps)
 
     const handleKeyboardPress = (key: string) => {
         const currentValue = watch('phone') || '+7';
+        if (key === '+') return;
         if (key === 'delete') {
             setValue('phone', currentValue.slice(0, -1));
         } else {
@@ -44,7 +44,6 @@ export const FormCreateOrder = memo(({ confirmFn, error }: FormCreateOrderProps)
 
 
     const onSubmit = (formData: FormData) => {
-        console.log('confirmFn', formData)
         if (confirmFn)
             confirmFn(formData);
     };

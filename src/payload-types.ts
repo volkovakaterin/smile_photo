@@ -53,10 +53,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    'functional-mode': FunctionalMode;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'functional-mode': FunctionalModeSelect<false> | FunctionalModeSelect<true>;
   };
   locale: null;
   user: User & {
@@ -641,14 +643,16 @@ export interface Order {
   images?:
     | {
         image: string;
-        products: {
-          product: string;
-          label: string;
-          quantity: number;
-          done: boolean;
-          electronic_frame: boolean;
-          id?: string | null;
-        }[];
+        products?:
+          | {
+              product: string;
+              label: string;
+              quantity: number;
+              done: boolean;
+              electronic_frame: boolean;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -663,6 +667,8 @@ export interface Order {
 export interface Product {
   id: string;
   name: string;
+  format: 'electronic' | 'printed';
+  copies: 'many_copies' | 'single_copy';
   updatedAt: string;
   createdAt: string;
 }
@@ -1156,6 +1162,8 @@ export interface OrdersSelect<T extends boolean = true> {
  */
 export interface ProductsSelect<T extends boolean = true> {
   name?: T;
+  format?: T;
+  copies?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1442,6 +1450,16 @@ export interface Footer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "functional-mode".
+ */
+export interface FunctionalMode {
+  id: string;
+  mode: 'with_formats' | 'without_formats';
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -1482,6 +1500,16 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "functional-mode_select".
+ */
+export interface FunctionalModeSelect<T extends boolean = true> {
+  mode?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -1,10 +1,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { PhotoOrder } from './useEditPhoto';
+
+const url = process.env.NEXT_PUBLIC_SERVER_URL;
 
 export const getOrderId = async (id: string | null): Promise<Response> => {
-    const response = await axios.get<Response>(`http://localhost:3000/api/orders/${id}`);
+    const response = await axios.get<Response>(`${url}/api/orders/${id}`);
     return response.data;
 };
 

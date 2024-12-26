@@ -4,29 +4,22 @@ import { ButtonSecondary } from '@/components/Client/UI/ButtonSecondary/ButtonSe
 import styles from './style.module.scss';
 import { useOrder } from '@/providers/OrderProvider';
 import { useRouter } from 'next/navigation';
-
-
+import { useEffect } from 'react';
 
 export default function HomePage() {
-    const { setBasketProducts, setQuantityProducts, setOrderId } = useOrder();
+    const { resetOrder } = useOrder();
     const router = useRouter();
 
-    const reset = () => {
-        setBasketProducts(null);
-        setQuantityProducts(0);
-        setOrderId(null)
-    }
+    useEffect(() => {
+        resetOrder();
+    }, [])
 
     const goSearchPhoto = () => {
-        reset();
         router.push(`/search-photo`);
-
     }
 
     const goEditOrder = () => {
-        reset();
         router.push(`/search-order`);
-
     }
     return (
 

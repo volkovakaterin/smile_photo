@@ -16,9 +16,10 @@
   left: 50%;
   transform: translateX(-50%);
   height: 0;
+  overflow: hidden;
   background-color: #ebf4f9;
   opacity: 0;
-  transition: 0.3ms;
+  transition: 0.2s;
 
   &.show {
     height: 199px;

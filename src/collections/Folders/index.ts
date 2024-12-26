@@ -3,8 +3,8 @@ import { CollectionConfig } from 'payload';
 const Folders: CollectionConfig = {
     slug: 'folders',
     labels: {
-        singular: 'Folder',
-        plural: 'Folders',
+        singular: 'Папка',
+        plural: 'Папки',
     },
     admin: {
         useAsTitle: 'name',

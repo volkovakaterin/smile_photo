@@ -4,9 +4,8 @@ import processFolders from './cron/processFolders';
 import validateFoldersInDatabase from './cron/removeDeletedFolders';
 
 
-cron.schedule('*/10 * * * *', async () => {
-    console.log('Запуск задачи каждые 10 мин ...');
+cron.schedule('*/5 * * * *', async () => {
     await processFolders();
     await validateFoldersInDatabase();
 });
-console.log('Планировщик задач инициализирован.');
+
