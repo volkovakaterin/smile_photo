@@ -11,17 +11,19 @@ interface SlideTypeProductProps {
     dir: string;
 }
 
+const normalizePath = (p) => p.replace(/\\/g, '/');
+
 export const SlideTypeProduct = memo(({ index, image, dir }: SlideTypeProductProps) => {
     return (
         <div className={styles.SlideTypeProduct}>
             <div key={index} className={styles.sliderItem}>
                 <Image
                     fill
-                    src={`/images${dir}/${image}`}
+                    src={`/images${dir}/${normalizePath(image)}`}
                     alt="Image"
                     className={styles.image} />
             </div>
-            <div className={styles.photoName}>{path.parse(image).name}</div>
+            <div className={styles.photoName}>{path.parse(normalizePath(image)).name}</div>
         </div>
     )
 });

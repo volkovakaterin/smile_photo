@@ -16,12 +16,11 @@ const processFolders = async () => {
 
     const traverseDirectory = async (directory) => {
         const items = fs.readdirSync(directory, { withFileTypes: true });
-
         for (const item of items) {
             if (item.isDirectory()) {
                 const currentPath = path.join(directory, item.name);
-                const relativePath = path.relative(photosDirectory, path.dirname(currentPath)); // Путь с корневой папкой, исключая саму папку
-
+                const normalizePath = (p) => p.split(path.sep).join('/');
+const relativePath = normalizePath(path.relative(photosDirectory, path.dirname(currentPath)));// Путь с корневой папкой, исключая саму папку
                 try {
                     const existingFolder = await payload.find({
                         collection: 'folders',

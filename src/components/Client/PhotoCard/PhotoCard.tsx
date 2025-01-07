@@ -27,13 +27,17 @@ interface PhotoCardProps {
     openPreviewModal?: (image: string) => void;
 }
 
+const normalizePath = (p) => p.replace(/\\/g, '/');
+
 export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelectPhoto, selectPhotos,
     fromBasket, onOpen, quantity, dir, openPreviewModal }: PhotoCardProps) => {
     const [btnParams, setBtnParams] = useState<{ icon: string, backgroundColor: string } | undefined>(undefined);
     const [select, setSelect] = useState(false);
+    const [normalizeImage,setNormalizeImage]=useState('');
 
     useEffect(() => {
-        setSelect(checkSelectPhoto(image));
+        setSelect(checkSelectPhoto(normalizePath(image)));
+        setNormalizeImage(normalizePath(image));
     }, [image, selectPhotos])
 
     useEffect(() => {
@@ -49,17 +53,17 @@ export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelec
             <div className={styles.PhotoCard}>
                 {(fromBasket && quantity != null && quantity > 0) && (<span className={styles.quantity} onClick={onOpen}>{quantity}</span>)}
                 <Image
-                    src={`/images${dir}/${image}`}
-                    fill alt={'photo'} onClick={() => { fromBasket ? (openPreviewModal && openPreviewModal(image)) : (onClick && onClick(index)) }} className={styles.image} />
+                    src={`/images${dir}/${normalizeImage}`}
+                    fill alt={'photo'} onClick={() => { fromBasket ? (openPreviewModal && openPreviewModal(normalizeImage)) : (onClick && onClick(index)) }} className={styles.image} />
                 {!fromBasket && (<div className={styles.statusBox}><span className={`${styles.statusMark} ${select ? styles.visible : false}`}></span></div>)}
                 <div className={styles.wrapperBtn}
                 >
                     {(fromBasket && onOpen) && (<ButtonWithContent icon={Edit} backgroundColor={'#fff'} onClick={onOpen} />)}
                     <ButtonWithContent icon={btnParams && (btnParams.icon)} backgroundColor={btnParams && (btnParams.backgroundColor)}
-                        onClick={() => toggleSelect(image, select, index)} />
+                        onClick={() => toggleSelect(normalizeImage, select, index)} />
                 </div>
             </div>
-            <div className={styles.photoName}>{path.parse(image).name}</div>
+            <div className={styles.photoName}>{path.parse(normalizeImage).name}</div>
         </div>
     );
 });

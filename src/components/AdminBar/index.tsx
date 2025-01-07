@@ -37,7 +37,7 @@ export const AdminBar: React.FC<{
   const { adminBarProps } = props || {}
   const segments = useSelectedLayoutSegments()
   const [show, setShow] = useState(false)
-  const collection = collectionLabels?.[segments?.[1]] ? segments?.[1] : 'pages'
+  const collection = segments?.[1] ?? 'pages';
   const router = useRouter()
 
   const onAuthChange = React.useCallback((user) => {

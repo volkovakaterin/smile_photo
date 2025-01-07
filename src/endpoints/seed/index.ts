@@ -9,6 +9,23 @@ import { post1 } from './post-1'
 import { post2 } from './post-2'
 import { post3 } from './post-3'
 
+interface GlobalSettings {
+  navItems?: Array<{
+    link: {
+      type: string;
+      label: string;
+      url?: string;
+      reference?: {
+        relationTo: string;
+        value: string | number;
+      };
+      newTab?: boolean;
+    };
+  }>;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+
 const collections: CollectionSlug[] = [
   'categories',
   'media',
@@ -47,7 +64,7 @@ export const seed = async ({
       slug: global,
       data: {
         navItems: [],
-      },
+      } as GlobalSettings,
     })
   }
 

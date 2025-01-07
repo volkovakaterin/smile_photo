@@ -74,9 +74,6 @@ export default buildConfig({
     url: process.env.DATABASE_URI || '',
   }),
   collections: [Pages, Posts, Media, Categories, Users, Folders, Orders, Products, Directories],
-  onInit: async (payload) => {
-    await initDirectories(payload);
-  },
   cors: [getServerSideURL()].filter(Boolean),
   endpoints: [getPhotos, savePhotoFormat, createArchive],
   globals: [Header, Footer, FunctionalMode],

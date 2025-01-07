@@ -18,11 +18,14 @@ interface SlidePreviewProps {
     dir: string;
 }
 
+const normalizePath = (p) => p.replace(/\\/g, '/');
+
 export const SlidePreview = memo(({ toggleSelect, index, image, checkSelectPhoto, selectPhotos, dir }: SlidePreviewProps) => {
     const [btnParams, setBtnParams] = useState({ icon: Basket, backgroundColor: '#F4B45C' });
     const [select, setSelect] = useState(false);
     const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
     const imgRef = useRef<HTMLImageElement | null>(null);
+    const [normalizeImage,setNormalizeImage]=useState('');
 
     const handleImageLoad = (index: number) => {
         if (imgRef.current) {
@@ -34,8 +37,9 @@ export const SlidePreview = memo(({ toggleSelect, index, image, checkSelectPhoto
 
 
     useEffect(() => {
+        setNormalizeImage(normalizePath(image));
         if (checkSelectPhoto)
-            setSelect(checkSelectPhoto(image));
+            setSelect(checkSelectPhoto(normalizePath(image)));
     }, [image, selectPhotos])
 
 
@@ -64,14 +68,14 @@ export const SlidePreview = memo(({ toggleSelect, index, image, checkSelectPhoto
                         className={styles.image}
                         style={{ height: '100%', objectFit: 'contain' }}
                         ref={imgRef}
-                        src={`/images${dir}/${image}`}
+                        src={`/images${dir}/${normalizeImage}`}
                         alt="Image"
                         onLoad={() => handleImageLoad(index)}
                     />
                 </div>
             </Watermark>
-            <div className={styles.photoName}>{path.parse(image).name}</div>
-            {toggleSelect && (<div className={styles.wrapperBtn} onClick={() => toggleSelect(image, select, index)}>
+            <div className={styles.photoName}>{path.parse(normalizeImage).name}</div>
+            {toggleSelect && (<div className={styles.wrapperBtn} onClick={() => toggleSelect(normalizeImage, select, index)}>
                 <ButtonWithContent icon={btnParams.icon} backgroundColor={btnParams.backgroundColor}
                     width={68} height={68} widthIcon={42} heightIcon={38}
                 />

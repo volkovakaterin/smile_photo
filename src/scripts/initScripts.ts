@@ -2,12 +2,16 @@ import payload from 'payload';
 import config from '../payload.config';
 import '../scheduler';
 import 'dotenv/config';
+import { initDirectories } from '@/services/initDirectories';
+
+console.log('инициализация')
 
 const start = async () => {
     await payload.init({
         config,
-        onInit: () => {
-        },
+        onInit: async (payload) => {
+            await initDirectories(payload);
+          },
     });
 };
 
