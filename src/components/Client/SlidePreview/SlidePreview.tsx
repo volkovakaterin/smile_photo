@@ -19,6 +19,7 @@ interface SlidePreviewProps {
 }
 
 const normalizePath = (p) => p.replace(/\\/g, '/');
+const ensureLeadingSlash = (p: string) => (p.startsWith('/') ? p : `/${p}`);
 
 export const SlidePreview = memo(({ toggleSelect, index, image, checkSelectPhoto, selectPhotos, dir }: SlidePreviewProps) => {
     const [btnParams, setBtnParams] = useState({ icon: Basket, backgroundColor: '#F4B45C' });
@@ -68,7 +69,7 @@ export const SlidePreview = memo(({ toggleSelect, index, image, checkSelectPhoto
                         className={styles.image}
                         style={{ height: '100%', objectFit: 'contain' }}
                         ref={imgRef}
-                        src={`/images${dir}/${normalizeImage}`}
+                        src={`/images${ensureLeadingSlash(dir)}/${normalizeImage}`}
                         alt="Image"
                         onLoad={() => handleImageLoad(index)}
                     />

@@ -1,3 +1,5 @@
+
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 import fs from 'fs';
@@ -10,13 +12,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return;
     }
 
-    const filePath = path.join('/', ...(Array.isArray(imagePath) ? imagePath : [imagePath]));
+    // Декодирование пути из параметров
+    const decodedPath = decodeURIComponent(Array.isArray(imagePath) ? imagePath.join('/') : imagePath);
+    let normalizedPath = path.normalize(decodedPath);
 
-    if (!fs.existsSync(filePath)) {
+    const isAbsolute = path.isAbsolute(normalizedPath);
+
+    console.log('Requested path:', decodedPath);
+
+    if (!isAbsolute) {
+        normalizedPath = path.join('/', normalizedPath);
+        console.log('Updated path (with leading slash):', normalizedPath);
+    }
+
+    // Проверяем существование файла
+    if (!fs.existsSync(normalizedPath)) {
         res.status(404).send('Image not found');
         return;
     }
 
+    // Устанавливаем тип содержимого и отправляем файл
     res.setHeader('Content-Type', 'image/jpeg');
-    fs.createReadStream(filePath).pipe(res);
+    fs.createReadStream(normalizedPath).pipe(res);
 }

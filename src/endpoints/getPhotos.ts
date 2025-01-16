@@ -15,6 +15,8 @@ const getPhotos: Endpoint = {
 
         const folderFullPath = path.join(photosDirectory, folderPath as string);
 
+        console.log(folderFullPath, 'ПОЛНЫЙ ПУТЬ К ПАПКЕ');
+
         try {
             const files = fs.readdirSync(folderFullPath);
             const images = files

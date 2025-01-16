@@ -28,6 +28,7 @@ interface PhotoCardProps {
 }
 
 const normalizePath = (p) => p.replace(/\\/g, '/');
+const ensureLeadingSlash = (p: string) => (p.startsWith('/') ? p : `/${p}`);
 
 export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelectPhoto, selectPhotos,
     fromBasket, onOpen, quantity, dir, openPreviewModal }: PhotoCardProps) => {
@@ -53,7 +54,7 @@ export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelec
             <div className={styles.PhotoCard}>
                 {(fromBasket && quantity != null && quantity > 0) && (<span className={styles.quantity} onClick={onOpen}>{quantity}</span>)}
                 <Image
-                    src={`/images${dir}/${normalizeImage}`}
+                    src={`/images${ensureLeadingSlash(dir)}/${normalizeImage}`}
                     fill alt={'photo'} onClick={() => { fromBasket ? (openPreviewModal && openPreviewModal(normalizeImage)) : (onClick && onClick(index)) }} className={styles.image} />
                 {!fromBasket && (<div className={styles.statusBox}><span className={`${styles.statusMark} ${select ? styles.visible : false}`}></span></div>)}
                 <div className={styles.wrapperBtn}
