@@ -74,9 +74,8 @@ export default buildConfig({
     url: process.env.DATABASE_URI || '',
   }),
   collections: [Pages, Posts, Media, Categories, Users, Folders, Orders, Products, Directories],
-  //cors: [getServerSideURL()].filter(Boolean),
-  cors: '*', // Разрешить запросы с любого адреса
-  csrf: ['*'], // Разрешить CSRF-токены для всех источников
+  cors: ['http://localhost:3000','http://network:3000'],
+  csrf: ['http://localhost:3000','http://network:3000'],
   endpoints: [getPhotos, savePhotoFormat, createArchive],
   globals: [Header, Footer, FunctionalMode],
   plugins: [
