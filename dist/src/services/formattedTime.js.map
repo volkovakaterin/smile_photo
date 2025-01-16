@@ -1,1 +1,0 @@
-{"version":3,"file":"formattedTime.js","sourceRoot":"","sources":["../../../src/services/formattedTime.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,aAAa,GAAG,CAAC,SAAiB,EAAE,EAAE;IAC/C,MAAM,IAAI,GAAG,IAAI,IAAI,CAAC,SAAS,CAAC,CAAC;IACjC,MAAM,aAAa,GAAG,IAAI,CAAC,kBAAkB,CAAC,OAAO,EAAE;QACnD,IAAI,EAAE,SAAS;QACf,MAAM,EAAE,SAAS;KACpB,CAAC,CAAC;IACH,OAAO,aAAa,CAAC;AACzB,CAAC,CAAC"}

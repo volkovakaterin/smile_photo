@@ -1,1 +1,0 @@
-{"version":3,"file":"config.js","sourceRoot":"","sources":["../../../../src/blocks/MediaBlock/config.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,UAAU,GAAU;IAC/B,IAAI,EAAE,YAAY;IAClB,aAAa,EAAE,YAAY;IAC3B,MAAM,EAAE;QACN;YACE,IAAI,EAAE,OAAO;YACb,IAAI,EAAE,QAAQ;YACd,UAAU,EAAE,OAAO;YACnB,QAAQ,EAAE,IAAI;SACf;KACF;CACF,CAAA"}
