@@ -10,7 +10,7 @@ export interface OrderData {
 const url = process.env.NEXT_PUBLIC_SERVER_URL
 
 export const createOrder = async (orderData: OrderData): Promise<Response> => {
-    const response = await axios.post<Response>(`${url}/api/orders`, orderData);
+    const response = await axios.post<Response>(`/api/orders`, orderData);
     return response.data;
 };
 

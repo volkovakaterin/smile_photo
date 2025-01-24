@@ -7,6 +7,7 @@ import { ButtonWithContent } from '../UI/ButtonWithContent/ButtonWithContent';
 import Delete from '@/assets/icons/icon_trash.svg';
 import Basket from '@/assets/icons/icon_shop_white.svg';
 import { Watermark } from "antd";
+import Image from 'next/image';
 
 
 interface SlidePreviewProps {
@@ -65,7 +66,9 @@ export const SlidePreview = memo(({ toggleSelect, index, image, checkSelectPhoto
                 rotate={0}
             >
                 <div key={index} className={styles.sliderItem}>
-                    <img
+                    <Image
+                    quality={10}
+                    fill
                         className={styles.image}
                         style={{ height: '100%', objectFit: 'contain' }}
                         ref={imgRef}

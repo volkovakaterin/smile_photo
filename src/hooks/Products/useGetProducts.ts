@@ -13,7 +13,7 @@ export const getProducts = async (): Promise<Response> => {
         },
         { addQueryPrefix: true },
     )
-    const response = await axios.get<Response>(`${url}/api/products${stringifiedQuery}`);
+    const response = await axios.get<Response>(`/api/products${stringifiedQuery}`);
     return response.data;
 };
 

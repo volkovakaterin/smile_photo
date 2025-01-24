@@ -11,7 +11,7 @@ export interface PhotoOrder {
 const url = process.env.NEXT_PUBLIC_SERVER_URL
 
 export const changeStatusOrder = async (data: { status: boolean, id: string }): Promise<Response> => {
-    const response = await axios.patch<Response>(`${url}/api/orders/${data.id}`,
+    const response = await axios.patch<Response>(`/api/orders/${data.id}`,
         { status: data.status });
     return response.data;
 };

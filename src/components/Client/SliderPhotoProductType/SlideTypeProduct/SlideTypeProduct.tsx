@@ -20,6 +20,7 @@ export const SlideTypeProduct = memo(({ index, image, dir }: SlideTypeProductPro
             <div key={index} className={styles.sliderItem}>
                 <Image
                     fill
+                    quality={1}
                     src={`/images${ensureLeadingSlash(dir)}/${normalizePath(image)}`}
                     alt="Image"
                     className={styles.image} />

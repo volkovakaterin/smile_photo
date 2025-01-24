@@ -54,6 +54,7 @@ export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelec
             <div className={styles.PhotoCard}>
                 {(fromBasket && quantity != null && quantity > 0) && (<span className={styles.quantity} onClick={onOpen}>{quantity}</span>)}
                 <Image
+                quality={1}
                     src={`/images${ensureLeadingSlash(dir)}/${normalizeImage}`}
                     fill alt={'photo'} onClick={() => { fromBasket ? (openPreviewModal && openPreviewModal(normalizeImage)) : (onClick && onClick(index)) }} className={styles.image} />
                 {!fromBasket && (<div className={styles.statusBox}><span className={`${styles.statusMark} ${select ? styles.visible : false}`}></span></div>)}

@@ -7,7 +7,7 @@ import axios from 'axios';
 const url = process.env.NEXT_PUBLIC_SERVER_URL
 
 export const deleteOrder = async (id: string): Promise<Response> => {
-    const response = await axios.delete<Response>(`${url}/api/orders/${id}`);
+    const response = await axios.delete<Response>(`/api/orders/${id}`);
     return response.data;
 };
 

@@ -11,7 +11,6 @@ import { useEditOrder } from "@/hooks/Order/useEditPhoto";
 import path from 'path';
 import { useOrder } from "@/providers/OrderProvider";
 import { downloadArchive } from "./services/downloadArchive";
-import { savePhoto } from "./services/savePhoto";
 import { SelectProducts } from "../SelectProducts/SelectProducts";
 import { useProducts } from "@/hooks/Products/useGetProducts";
 
@@ -200,8 +199,8 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
                                                                         <Typography>
                                                                             <strong>Фото:</strong>
                                                                             <Image
+                                                                            quality={1}
                                                                                 src={`/images${ensureLeadingSlash(directories.photos)}/${image.image}`}
-                                                                                onClick={() => savePhoto(`${directories.photos}/${image.image}`, path.parse(image.image).name)}
                                                                                 alt={'photo'} width={212}
                                                                                 height={114}
                                                                                 className={styles.image} />

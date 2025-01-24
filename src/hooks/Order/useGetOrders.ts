@@ -27,7 +27,7 @@ export const getOrders = async (status?: string | string[], phone?: string): Pro
         },
         { addQueryPrefix: true },
     )
-    const response = await axios.get<Response>(`${url}/api/orders${stringifiedQuery}`);
+    const response = await axios.get<Response>(`/api/orders${stringifiedQuery}`);
     return response.data;
 };
 

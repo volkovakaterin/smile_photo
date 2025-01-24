@@ -11,7 +11,7 @@ export interface PhotoOrder {
 const url = process.env.NEXT_PUBLIC_SERVER_URL;
 
 export const editPhotoOrder = async (data: { photoOrder: PhotoOrder[], id: string }): Promise<Response> => {
-    const response = await axios.patch<Response>(`${url}/api/orders/${data.id}`, { images: data.photoOrder });
+    const response = await axios.patch<Response>(`/api/orders/${data.id}`, { images: data.photoOrder });
     return response.data;
 };
 

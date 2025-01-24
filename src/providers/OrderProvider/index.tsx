@@ -60,7 +60,7 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const fetchDirectories = async () => {
             try {
-                const response = await axios.get(`${url}/api/directories`);
+                const response = await axios.get(`/api/directories`);
                 const photos = response.data.docs.find((item: any) => item.service_name === 'photo_directory')?.path || '';
                 setDirectories({ photos });
             } catch (error) {

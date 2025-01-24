@@ -5,7 +5,7 @@ import axios from 'axios';
 const url = process.env.NEXT_PUBLIC_SERVER_URL;
 
 export const getOrderId = async (id: string | null): Promise<Response> => {
-    const response = await axios.get<Response>(`${url}/api/orders/${id}`);
+    const response = await axios.get<Response>(`/api/orders/${id}`);
     return response.data;
 };
 

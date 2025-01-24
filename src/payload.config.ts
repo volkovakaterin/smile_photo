@@ -15,14 +15,11 @@ import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
-import { getServerSideURL } from './utilities/getURL'
 import Folders from './collections/Folders'
 import getPhotos from './endpoints/getPhotos'
 import Orders from './collections/Orders'
 import Products from './collections/Products'
 import Directories from './collections/Directories'
-import savePhotoFormat from './endpoints/savePhotoFormat'
-import { initDirectories } from './services/initDirectories'
 import createArchive from './endpoints/createArchive'
 import { FunctionalMode } from './FunctionalMode/config'
 
@@ -74,9 +71,9 @@ export default buildConfig({
     url: process.env.DATABASE_URI || '',
   }),
   collections: [Pages, Posts, Media, Categories, Users, Folders, Orders, Products, Directories],
-  cors: ['http://localhost:3000','http://network:3000'],
-  csrf: ['http://localhost:3000','http://network:3000'],
-  endpoints: [getPhotos, savePhotoFormat, createArchive],
+  cors: ['http://localhost:3000','http://192.168.1.28:3000'],
+  csrf: ['http://localhost:3000','http://192.168.1.28:3000'],
+  endpoints: [getPhotos, createArchive],
   globals: [Header, Footer, FunctionalMode],
   plugins: [
     ...plugins,
