@@ -1,0 +1,17 @@
+@import '@/styles/variables.scss';
+@import '@/styles/mixins.scss';
+
+.Btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  padding: 4px 20px;
+  background-color: $Orange;
+  border-radius: 30px;
+  cursor: pointer;
+  .text {
+    @include font_1920;
+    color: $MainWhite;
+  }
+}

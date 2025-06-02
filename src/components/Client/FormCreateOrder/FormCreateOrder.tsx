@@ -56,9 +56,9 @@ export const FormCreateOrder = memo(({ confirmFn, error }: FormCreateOrderProps)
                         <Controller
                             name="phone"
                             control={control}
-                            rules={{
-                                validate: matchIsValidTel as any,
-                            }}
+                            // rules={{
+                            //     validate: matchIsValidTel as any,
+                            // }}
                             render={({ field, fieldState }) => (
                                 <InputPhone field={field} fieldState={fieldState} errors={errors}
                                     setPhoneExistsError={setPhoneExistsError}

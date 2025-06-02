@@ -18,11 +18,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const isAbsolute = path.isAbsolute(normalizedPath);
 
-    console.log('Requested path:', decodedPath);
 
     if (!isAbsolute) {
         normalizedPath = path.join('/', normalizedPath);
-        console.log('Updated path (with leading slash):', normalizedPath);
     }
 
     // Проверяем существование файла

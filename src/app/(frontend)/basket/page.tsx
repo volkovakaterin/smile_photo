@@ -18,6 +18,8 @@ import { FormTypeProduct } from '@/components/Client/FormTypeProduct/FormTypePro
 import { useProducts } from '@/hooks/Products/useGetProducts';
 import { PreviewPhoto } from '@/components/Client/PreviewPhoto/PreviewPhoto';
 import { useFunctionalMode } from '@/providers/FunctionalMode';
+import { useRouter } from 'next/navigation';
+import { useShowModalGlobal } from '@/providers/ShowModal';
 
 export type ProductBasketType = { product: string; photos: { image: string; quantity: number; }[]; }
 
@@ -25,9 +27,9 @@ const Basket = () => {
     const [showModal, setShowModal] = useState(false);
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [success, setSuccess] = useState(false);
-    const { orderId, quantityProducts, basketProducts, setBasketProducts, setQuantityProducts, directories, handleSetFormatForAll, formatForAll } = useOrder();
+    const { orderId, quantityProducts, basketProducts, setBasketProducts, setQuantityProducts, directories, handleSetFormatForAll, formatForAll, lastFolder } = useOrder();
     const { order } = useOrderId(orderId);
-    const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto } = useEditOrder();
+    const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto, handleTogglePrintOrder } = useEditOrder();
     const { handleChangeStatusOrder } = useStatusChangeOrder();
     const [date, setDate] = useState<{ date: string, time: string }>({ date: "", time: "" });
     const [telNumber, setTelNumber] = useState('');
@@ -37,6 +39,8 @@ const Basket = () => {
     const [currentImageProducts, setCurrentImageProducts] = useState(null);
     const { products } = useProducts();
     const { mode } = useFunctionalMode();
+    const { showModalGlobal, setShowModalGlobal } = useShowModalGlobal();
+    const router = useRouter();
 
     const confirmOrder = () => {
         setTelNumber(order.tel_number)
@@ -64,14 +68,36 @@ const Basket = () => {
         }
     }, [order])
 
-    const toggleSelect = (element: string, product?) => {
+    const toggleSelect = (el: string, product?) => {
         if (!orderId) {
             console.error('Заказ не открыт. Невозможно удалить фото.');
             return;
         }
         if (mode == 'with_formats') {
-            handleDeleteProduct(element, orderId, order, product);
-        } else { handleDeletePhoto(element, orderId, order) }
+            handleDeleteProduct(el, orderId, order, product);
+        } else { handleDeletePhoto(el, orderId, order) }
+    }
+
+    const togglePrint = (el: string) => {
+        console.log(el)
+        if (!orderId) {
+            console.error('Заказ не открыт. Невозможно изменить значение.');
+            return;
+        } else {
+            handleTogglePrintOrder(orderId, el, order)
+        }
+    }
+
+    const checkPrintPhoto = (el) => {
+        if (order) {
+            const result = order.images.find(item => item.image === el);
+            console.log(result)
+            if (result) {
+                return result.print
+            } else {
+                return false
+            }
+        } return false
     }
 
     const handleOpenEdit = (photoProduct, product) => {
@@ -127,11 +153,24 @@ const Basket = () => {
         editOrder(productsWithPhoto, orderId, selectPhoto, order);
     }
 
+    const navigationBack = () => {
+        router.push(`/search-photo`);
+    }
+
+    const navigationExit = () => {
+        if (orderId) {
+            setShowModalGlobal(true)
+        } else {
+            router.push('/');
+        }
+    }
+
     if (!order) return;
     return (
         <div>
             {!success && (<div>
-                <NavigationBar basket={true} totalQuantity={quantityProducts} />
+                <NavigationBar basket={true} totalQuantity={quantityProducts} navigationBack={navigationBack}
+                    btnExit={true} navigationExit={navigationExit} btnBack={true} />
                 <div className={styles.Basket}>
                     <h2 className={styles.title}>Корзина</h2>
                     <span className={styles.dateOrder}>{date.date} / {date.time}</span>
@@ -148,6 +187,7 @@ const Basket = () => {
                         ))))
                             : (
                                 <ProductBasket images={order.images}
+                                    togglePrint={(element: string) => togglePrint(element)}
                                     toggleSelect={(element: string) => toggleSelect(element)}
                                     checkSelectPhoto={() => { return false; }}
                                     selectPhotos={[]}
@@ -178,11 +218,17 @@ const Basket = () => {
                 </TheModal>,
                 document.body)}
             {showPreviewModal && createPortal(
-                <PreviewPhoto dir={directories.photos}
-                    selectPhotos={order?.images ?? []} open={showPreviewModal}
+                <PreviewPhoto
+                    mode={mode}
+                    dir={directories.photos}
+                    toggleSelect={toggleSelect}
+                    togglePrint={togglePrint}
+                    open={showPreviewModal}
                     handleClose={handleClosePreviewModal}
                     activeSlide={activeSlide}
                     images={order ? order.images.map((image) => { return image.image }) : null}
+                    fromBasket
+                    checkPrintPhoto={checkPrintPhoto}
                 />,
                 document.body
             )}

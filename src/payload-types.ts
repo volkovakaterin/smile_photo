@@ -54,11 +54,13 @@ export interface Config {
     header: Header;
     footer: Footer;
     'functional-mode': FunctionalMode;
+    'period-cleaner': PeriodCleaner;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'functional-mode': FunctionalModeSelect<false> | FunctionalModeSelect<true>;
+    'period-cleaner': PeriodCleanerSelect<false> | PeriodCleanerSelect<true>;
   };
   locale: null;
   user: User & {
@@ -630,6 +632,7 @@ export interface Folder {
   id: string;
   name: string;
   path?: string | null;
+  with_photo?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -643,6 +646,8 @@ export interface Order {
   images?:
     | {
         image: string;
+        print?: boolean | null;
+        addedAt: string;
         products?:
           | {
               product: string;
@@ -669,6 +674,7 @@ export interface Product {
   name: string;
   format: 'electronic' | 'printed';
   copies: 'many_copies' | 'single_copy';
+  defolt: boolean;
   updatedAt: string;
   createdAt: string;
 }
@@ -1127,6 +1133,7 @@ export interface UsersSelect<T extends boolean = true> {
 export interface FoldersSelect<T extends boolean = true> {
   name?: T;
   path?: T;
+  with_photo?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1140,6 +1147,8 @@ export interface OrdersSelect<T extends boolean = true> {
     | T
     | {
         image?: T;
+        print?: T;
+        addedAt?: T;
         products?:
           | T
           | {
@@ -1164,6 +1173,7 @@ export interface ProductsSelect<T extends boolean = true> {
   name?: T;
   format?: T;
   copies?: T;
+  defolt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1460,6 +1470,16 @@ export interface FunctionalMode {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "period-cleaner".
+ */
+export interface PeriodCleaner {
+  id: string;
+  period?: number | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -1510,6 +1530,16 @@ export interface FooterSelect<T extends boolean = true> {
  */
 export interface FunctionalModeSelect<T extends boolean = true> {
   mode?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "period-cleaner_select".
+ */
+export interface PeriodCleanerSelect<T extends boolean = true> {
+  period?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

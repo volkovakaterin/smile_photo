@@ -9,6 +9,19 @@ const Orders: CollectionConfig = {
     admin: {
         useAsTitle: 'tel_number',
     },
+    hooks: {
+        afterRead: [
+            ({ doc }) => {
+                if (Array.isArray(doc.images)) {
+                    doc.images.sort((a, b) =>
+                        a.image.localeCompare(b.image, 'ru', { sensitivity: 'base' })
+                    );
+                }
+                return doc;
+            },
+        ],
+
+    },
     fields: [
         {
             name: 'tel_number',
@@ -19,7 +32,6 @@ const Orders: CollectionConfig = {
                 readOnly: true,
             },
         },
-
         {
             name: 'images',
             type: 'array',
@@ -31,6 +43,23 @@ const Orders: CollectionConfig = {
                     type: 'text',
                     required: true,
                     label: 'Изображение',
+                },
+                {
+                    name: 'print',
+                    type: 'checkbox',
+                    required: false,
+                    label: 'Печать',
+                    defaultValue: false,
+                },
+                {
+                    name: 'addedAt',
+                    type: 'date',
+                    required: true,
+                    label: 'Дата добавления',
+                    defaultValue: () => new Date().toISOString(),
+                    admin: {
+                        readOnly: true,
+                    },
                 },
                 {
                     name: 'products',

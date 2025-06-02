@@ -10,6 +10,8 @@ import 'slick-carousel/slick/slick-theme.css';
 import { CustomArrow } from '../UI/CustomArrow/CustomArrow';
 import { SlideTypeProduct } from './SlideTypeProduct/SlideTypeProduct';
 
+const normalizePath = (p) => p.replace(/\\/g, '/');
+
 interface SliderPhotoProductTypeProps {
 
     activeSlide: number | null;
@@ -32,7 +34,7 @@ export const SliderPhotoProductType = memo(({ activeSlide, images, dir, switchSe
         initialSlide: activeSlide,
         afterChange: (current: number) => {
             const currentImage = images[current];
-            switchSelectePhoto(currentImage);
+            switchSelectePhoto(normalizePath(currentImage));
         },
         prevArrow: (
             <CustomArrow >

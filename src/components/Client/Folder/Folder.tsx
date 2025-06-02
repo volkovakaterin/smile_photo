@@ -1,7 +1,6 @@
 'use client';
 
-import { FC, ReactNode, memo } from 'react';
-import cn from 'classnames';
+import { FC, memo } from 'react';
 import styles from './Folder.module.scss';
 import FolderIcon from '../../../assets/icons/folder.svg';
 import Image from 'next/image';

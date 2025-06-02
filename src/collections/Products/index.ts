@@ -54,6 +54,12 @@ const Products: CollectionConfig = {
                 description: 'Возможность выбора множества копий',
             },
         },
+        {
+            name: 'defolt',
+            type: 'checkbox',
+            required: true,
+            label: 'Формат по умолчанию',
+        },
 
     ],
     access: {

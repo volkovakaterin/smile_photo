@@ -22,6 +22,10 @@ import Products from './collections/Products'
 import Directories from './collections/Directories'
 import createArchive from './endpoints/createArchive'
 import { FunctionalMode } from './FunctionalMode/config'
+import monitorFolders from './endpoints/monitoringFolders'
+import dynamicThumbnail from './endpoints/dynamicThumbnail'
+import { PeriodCleaner } from './PeriodCleaner'
+import processCleanerEndpoint from './endpoints/processCleaner'
 
 
 
@@ -71,10 +75,10 @@ export default buildConfig({
     url: process.env.DATABASE_URI || '',
   }),
   collections: [Pages, Posts, Media, Categories, Users, Folders, Orders, Products, Directories],
-  cors: ['http://localhost:3000','http://192.168.1.28:3000'],
-  csrf: ['http://localhost:3000','http://192.168.1.28:3000'],
-  endpoints: [getPhotos, createArchive],
-  globals: [Header, Footer, FunctionalMode],
+  cors: ['http://localhost:3000', 'http://network:3000'],
+  csrf: ['http://localhost:3000', 'http://network:3000'],
+  endpoints: [getPhotos, createArchive, monitorFolders, dynamicThumbnail, processCleanerEndpoint],
+  globals: [Header, Footer, FunctionalMode, PeriodCleaner],
   plugins: [
     ...plugins,
     // storage-adapter-placeholder

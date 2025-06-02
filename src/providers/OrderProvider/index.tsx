@@ -3,6 +3,13 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 
+interface Folder {
+    name: string;
+    path: string;
+    id?: string;
+    with_photo?: boolean;
+}
+
 interface OrderContextType {
     orderId: string | null;
     setOrderId: (id: string | null) => void;
@@ -18,6 +25,10 @@ interface OrderContextType {
     formatForAll: { id: string, label: string }[],
     setFormatForAll: (format: { id: string, label: string }[] | []) => void;
     handleSetFormatForAll: (id: string, label: string) => void;
+    lastFolder: Folder[];
+    setLastFolder: React.Dispatch<React.SetStateAction<Folder[]>>;
+    currentPath: string;
+    setCurrentPath: (path: string) => void;
 }
 
 export enum TYPE_MODE {
@@ -34,7 +45,11 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     const [mode, setMode] = useState(TYPE_MODE.CREAT);
     const [directories, setDirectories] = useState({ photos: '' });
     const [formatForAll, setFormatForAll] = useState<{ id: string, label: string }[]>([]);
-    const url = process.env.NEXT_PUBLIC_SERVER_URL
+    const [lastFolder, setLastFolder] = useState<Folder[]>([{
+        name: 'Все папки',
+        path: '',
+    }]);
+    const [currentPath, setCurrentPath] = useState('');
 
     const resetOrder = () => {
         setOrderId(null);
@@ -42,6 +57,11 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
         setQuantityProducts(0);
         setMode(TYPE_MODE.CREAT);
         setFormatForAll([]);
+        setLastFolder([{
+            name: 'Все папки',
+            path: '',
+        }]);
+        setCurrentPath('');
     };
 
     const handleSetFormatForAll = (id: string, label: string) => {
@@ -76,7 +96,8 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
         <OrderContext.Provider value={{
             orderId, setOrderId, basketProducts, setBasketProducts,
             quantityProducts, setQuantityProducts, mode, setMode, directories,
-            setDirectories, resetOrder, formatForAll, setFormatForAll, handleSetFormatForAll
+            setDirectories, resetOrder, formatForAll, setFormatForAll, handleSetFormatForAll, lastFolder, setLastFolder,
+            setCurrentPath, currentPath
         }}>
             {children}
         </OrderContext.Provider>

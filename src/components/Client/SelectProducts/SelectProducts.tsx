@@ -5,7 +5,6 @@ import { MenuItem, FormControl, Select, Checkbox, ListItemText, OutlinedInput, S
 import styles from './SelectProducts.module.scss';
 import { Product as SelectProduct } from '../OrdersTable/OrdersTable';
 
-
 type Product = {
     id: string,
     name: string,
@@ -40,7 +39,7 @@ export const SelectProducts = memo(({ products, onSelectionChange, selectProduct
 
     return (
         <FormControl fullWidth className={styles.SelectProducts}>
-            <div className={styles.labelSelect}>Выберите товары</div>
+            <div className={styles.labelSelect}>Выбрать товары</div>
             <Select
                 labelId="multi-select-label"
                 multiple

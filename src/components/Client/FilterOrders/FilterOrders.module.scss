@@ -1,3 +1,35 @@
 .FilterOrders {
   margin-top: 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+
+  .button {
+    padding: 0px 10px;
+    height: 40px;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #dadada;
+    border: 1px solid #dadada;
+  }
+
+  .button_open.active {
+    background-color: #fadee6;
+    border: 1px solid #f5b2c5;
+  }
+
+  .button_created.active {
+    background-color: #e3f1da;
+    border: 1px solid #c6eeac;
+  }
+
+  .button_paid.active {
+    background-color: #fff1cd;
+    border: 1px solid #f3dda8;
+  }
+
+  .button_closed.active {
+    background-color: #d9e0ed;
+    border: 1px solid #adc7f8;
+  }
 }

@@ -16,7 +16,7 @@
     "lint:fix": "cross-env NODE_OPTIONS=--no-deprecation next lint --fix",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "reinstall": "cross-env NODE_OPTIONS=--no-deprecation rm -rf node_modules && rm pnpm-lock.yaml && pnpm --ignore-workspace install",
-    "start": "concurrently \"cross-env NODE_OPTIONS=--no-deprecation next dev\" \"npx tsx src/scripts/initScripts.ts\""
+    "start": "concurrently \"cross-env NODE_OPTIONS=--no-deprecation next start\" \"npx tsx src/scripts/initScripts.ts\""
   },
   "dependencies": {
     "@emotion/styled": "^11.13.5",
@@ -67,6 +67,7 @@
     "react-slick": "^0.30.2",
     "sharp": "0.32.6",
     "slick-carousel": "^1.8.1",
+    "styled-components": "^6.1.16",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2"

@@ -108,7 +108,15 @@ export const FormTypeProduct = ({ onClose, confirmFn, error, products, selectPro
 
     useEffect(() => {
         if (handleAction) {
-            confirmFn(formValues);
+            const formats = formValues;
+            formatForAll.forEach(item => {
+                // Проверяем, что объект с данным id существует в formats
+                if (formats[item.id] && formats[item.id].quantity === 0) {
+                    formats[item.id].quantity = 1;
+                }
+            });
+
+            confirmFn(formats);
             setHandleAction(false);
         }
 

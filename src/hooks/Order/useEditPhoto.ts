@@ -8,8 +8,6 @@ export interface PhotoOrder {
     products: { product: string, quantity: number, label: string }[],
 }
 
-const url = process.env.NEXT_PUBLIC_SERVER_URL;
-
 export const editPhotoOrder = async (data: { photoOrder: PhotoOrder[], id: string }): Promise<Response> => {
     const response = await axios.patch<Response>(`/api/orders/${data.id}`, { images: data.photoOrder });
     return response.data;
@@ -30,7 +28,7 @@ export const useEditOrder = () => {
 
 
     //Добавить только фото без форматов
-    const handleAddPhotoOrder = (orderId, selectPhoto, order?) => {
+    const handleAddPhotoOrder = (orderId, selectPhoto, order, defaultProduct, print = false) => {
         if (!orderId) {
             console.error('Заказ не открыт. Невозможно добавить фото.');
             return;
@@ -41,8 +39,7 @@ export const useEditOrder = () => {
             return;
         }
 
-        const newImage = { image: selectPhoto };
-
+        const newImage = { image: selectPhoto, print, products: { product: defaultProduct.id, quantity: 1, label: defaultProduct.name } };
         const body: PhotoOrder[] = order
             ? [...order.images, newImage]
             : [newImage];
@@ -61,9 +58,99 @@ export const useEditOrder = () => {
 
     }
 
+    //Добавить все фото из папки (без форматов)
+    const handleAddAllPhotoOrder = (orderId, images, order, defaultProduct) => {
+        console.log('ВСЕ ФОТО', images);
+        if (!orderId) {
+            console.error('Заказ не открыт. Невозможно добавить фото.');
+            return;
+        }
+
+        if (!images) {
+            console.error('Фото не выбрано. Невозможно добавить фото.');
+            return;
+        }
+
+        // 1) Собираем Set из уже добавленных путей к изображениям
+        const existingSet = new Set(order?.images.map(item => item.image));
+
+        // 2) Оставляем только те пути, которых нет в заказе
+        const toAdd = images.filter(imgPath => !existingSet.has(imgPath));
+
+        if (!toAdd.length) {
+            console.log('Нет новых фото для добавления — все уже в заказе.');
+            return;
+        }
+
+        // 3) Формируем объекты PhotoOrder для каждого нового пути
+        const newImages: PhotoOrder[] = toAdd.map((element) => ({
+            image: element,
+            products: {
+                product: defaultProduct.id,
+                quantity: 1,
+                label: defaultProduct.name,
+            },
+        }));
+
+        const body: PhotoOrder[] = order && order.images
+            ? [...order.images, ...newImages]
+            : newImages;
+
+        editPhoto(
+            { photoOrder: body, id: orderId },
+            {
+                onSuccess: () => {
+                    queryClient.invalidateQueries({ queryKey: ['order'] });
+                },
+                onError: (error) => {
+                    console.error('Ошибка при добавлении фото в заказ:', error);
+                },
+            },
+        );
+
+    }
+
+    //Изменить значение поля Печать
+    const handleTogglePrintOrder = (orderId, selectPhoto, order) => {
+        console.log(selectPhoto);
+        if (!orderId) {
+            console.error('Заказ не открыт. Невозможно изменить поле Печать.');
+            return;
+        }
+
+        if (!selectPhoto) {
+            console.error('Фото не выбрано. Невозможно изменить поле Печать.');
+            return;
+        }
+        // 1. Клонируем массив и переключаем флаг print для нужной карточки
+
+        const newImages: PhotoOrder[] = order.images.map(item => {
+            if (item.image === selectPhoto) {
+                return {
+                    ...item,
+                    print: !item.print,     // именно тут инвертируем
+                };
+            }
+            return item;
+        });
+
+        editPhoto(
+            { photoOrder: newImages, id: orderId },
+            {
+                onSuccess: (data: any) => {
+                    queryClient.invalidateQueries({ queryKey: ['order'] });
+                    queryClient.invalidateQueries({ queryKey: ['orders'] });
+                },
+                onError: (error) => {
+                    console.error('Ошибка при добавлении фото в заказ:', error);
+                },
+            }
+        );
+
+    }
+
     //Редактировать заказ из формы выбора формата
     const editOrder = (productsWithPhoto: FormData, orderId, selectPhoto, order) => {
-
         if (!orderId) {
             console.error('Заказ не открыт. Невозможно изменить заказ.');
             return;
@@ -157,6 +244,7 @@ export const useEditOrder = () => {
             {
                 onSuccess: (data: any) => {
                     queryClient.invalidateQueries({ queryKey: ['order'] });
+                    queryClient.invalidateQueries({ queryKey: ['orders'] });
                 },
                 onError: (error) => {
                     console.error('Ошибка при удалении фото из заказа:', error);
@@ -420,7 +508,8 @@ export const useEditOrder = () => {
     return {
         handleDeletePhoto, editOrder, handleAddPhotoOrder, handleDeleteProduct,
         handleEditQuantityProduct, handleCompletedProducts, handleCompletedAllProducts,
-        handleElectronicFrame, applyFormatAllPhotos, addPhotoByMarkedFormatsForAll, addFormatOnePhoto
+        handleElectronicFrame, applyFormatAllPhotos, addPhotoByMarkedFormatsForAll, addFormatOnePhoto, handleAddAllPhotoOrder,
+        handleTogglePrintOrder
     };
 
 };

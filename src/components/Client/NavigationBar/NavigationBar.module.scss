@@ -3,4 +3,10 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
+
+  .wrapperGo {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
 }

@@ -11,10 +11,11 @@ type FormData = {
 };
 
 type FormSearchOrderProps = {
-    onSearchByPhone: (string) => void;
+    onSearchByPhone: (phone: string) => void;
+    searhByPhone: string;
 }
 
-const FormSearchOrder = ({ onSearchByPhone }: FormSearchOrderProps) => {
+const FormSearchOrder = ({ onSearchByPhone, searhByPhone }: FormSearchOrderProps) => {
     const {
         handleSubmit,
         control,
@@ -27,7 +28,7 @@ const FormSearchOrder = ({ onSearchByPhone }: FormSearchOrderProps) => {
     });
 
     const [phoneExistsError, setPhoneExistsError] = React.useState<string | null>(null);
-    const [showKeyboard, setShowKeyboard] = React.useState(true);
+    const [showKeyboard, setShowKeyboard] = React.useState(searhByPhone ? false : true);
 
     const handleKeyboardPress = (key: string) => {
         const currentValue = watch('phone') || '+7';
@@ -39,9 +40,15 @@ const FormSearchOrder = ({ onSearchByPhone }: FormSearchOrderProps) => {
         }
     };
 
+    useEffect(() => {
+        if (searhByPhone) {
+            setValue('phone', searhByPhone);
+        }
+    }, [searhByPhone, setValue]);
+
     const onSubmit = (data: FormData) => {
         setShowKeyboard(false);
-        onSearchByPhone(data.phone);
+        onSearchByPhone(data.phone.trim().replace(/\s+/g, ''));
     };
 
     return (
@@ -52,8 +59,8 @@ const FormSearchOrder = ({ onSearchByPhone }: FormSearchOrderProps) => {
                     control={control}
                     rules={{
                         required: 'Введите номер телефона',
-                        validate: (value) =>
-                            value.startsWith('+7') || 'Номер должен начинаться с +7',
+                        // validate: (value) =>
+                        //     value.startsWith('+7') || 'Номер должен начинаться с +7',
                     }}
                     render={({ field, fieldState }) => (
                         <InputPhone
@@ -69,7 +76,7 @@ const FormSearchOrder = ({ onSearchByPhone }: FormSearchOrderProps) => {
                 />
             </form>
             <div className={styles.keyboardWrapper}>
-                <div className={`${styles.keyboard} ${showKeyboard ? styles.show : false}`}>
+                <div className={`${styles.keyboard} ${showKeyboard ? styles.show : ''}`}>
                     <KeyboardNumbers onKeyPress={handleKeyboardPress} />
                 </div>
             </div>

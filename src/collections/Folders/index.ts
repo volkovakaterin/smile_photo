@@ -27,6 +27,14 @@ const Folders: CollectionConfig = {
                 readOnly: true,
             },
         },
+        {
+            name: 'with_photo',
+            type: 'checkbox',
+            label: 'Наличие фото',
+            admin: {
+                readOnly: true,
+            },
+        },
     ],
     access: {
         read: () => true,

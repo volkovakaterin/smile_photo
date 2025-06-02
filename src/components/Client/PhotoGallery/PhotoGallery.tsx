@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import styles from './PhotoGallery.module.scss';
 import { PhotoCard } from '../PhotoCard/PhotoCard';
 import { createPortal } from 'react-dom';
@@ -22,14 +22,20 @@ import axios from 'axios';
 import { SliderPhotoProductType } from '../SliderPhotoProductType/SliderPhotoProductType';
 import { useFunctionalMode } from '@/providers/FunctionalMode';
 
-const limit = 40;
+
+
+const limit = 20;
+
+export interface PhotoGalleryHandle {
+    addAllPhotos: () => void;
+}
 
 interface PhotoGalleryProps {
     folderPath: string;
 }
 
 
-export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
+export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProps>(({ folderPath }, ref) => {
     const [activeSlide, setActiveSlide] = useState<number | null>(null);
     const [activeSlideTypeProduct, setActiveSlideTypeProduct] = useState<number | null>(null);
     const [showModal, setShowModal] = useState(false);
@@ -41,13 +47,17 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
     const [selectPhoto, setSelectPhoto] = useState<string | null>(null);
     const { order } = useOrderId(orderId);
     const { mutate } = useCreateOrder();
-    const { handleDeletePhoto, editOrder, applyFormatAllPhotos, addPhotoByMarkedFormatsForAll, handleAddPhotoOrder } = useEditOrder();
+    const { handleDeletePhoto, editOrder, applyFormatAllPhotos, addPhotoByMarkedFormatsForAll,
+        handleAddPhotoOrder, handleAddAllPhotoOrder, handleTogglePrintOrder } = useEditOrder();
     const { products } = useProducts();
     const [containerWidth, setContainerWidth] = useState(0);
     const [columns, setColumns] = useState(1);
     const columnPercent = 19; // Ширина колонки в процентах
     const [currentImageProducts, setCurrentImageProducts] = useState(null);
     const { mode } = useFunctionalMode();
+    const [defoltProduct, setDefoltProduct] = useState(undefined);
+    const [printerAction, setPrinterAction] = useState(false);
+    const [addAllPhotoAction, setAddAllPhotoAction] = useState(false);
 
     async function fetchImages({ pageParam = 0, folderPath }) {
         const photosDirectory = directories.photos;
@@ -80,6 +90,10 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
 
     const allImages = data ? data.pages.flatMap((page) => page.rows) : [];
     const parentRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (products) { setDefoltProduct(products.docs.find(item => item.defolt === true)) }
+    }, [products])
 
     useEffect(() => {
         const updateColumns = () => {
@@ -154,8 +168,15 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
                 if (mode == 'with_formats') {
                     setShowTypeProduct(true);
                 } else {
-                    handleAddPhotoOrder(data.doc.id, selectPhoto);
+                    if (addAllPhotoAction) {
+                        console.log(data.doc.id, data.doc)
+                        handleAddAllPhotoOrder(data.doc.id, allImages, data.doc, defoltProduct)
+                    } else {
+                        handleAddPhotoOrder(data.doc.id, selectPhoto, undefined, defoltProduct, printerAction);
+                    }
                     setSelectPhoto(null);
+                    setPrinterAction(false);
+                    setAddAllPhotoAction(false);
                 }
                 queryClient.invalidateQueries({ queryKey: ['add order'] });
             },
@@ -170,29 +191,49 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
         editOrder(productsWithPhoto, orderId, selectPhoto, order);
     }
 
-    const toggleSelect = (element: string, select: boolean, index: number) => {
+    const toggleSelect = (el: string, select: boolean, index: number) => {
         if (!orderId) {
-            setSelectPhoto(element);
+            setSelectPhoto(el);
             setActiveSlideTypeProduct(index);
             setShowOpenOrder(true);
             setError(false);
         } else {
             if (select) {
-                handleDeletePhoto(element, orderId, order)
+                handleDeletePhoto(el, orderId, order)
                 setActiveSlideTypeProduct(null);
             } else {
                 if (mode == 'with_formats') {
                     if (formatForAll.length) {
-                        addPhotoByMarkedFormatsForAll(formatForAll, orderId, order, element)
+                        addPhotoByMarkedFormatsForAll(formatForAll, orderId, order, el)
                     }
-                    setSelectPhoto(element);
+                    setSelectPhoto(el);
                     setCurrentImageProducts(null);
                     setActiveSlideTypeProduct(index);
                     setShowTypeProduct(true);
                 } else {
-                    handleAddPhotoOrder(orderId, element, order)
+                    handleAddPhotoOrder(orderId, el, order, defoltProduct)
                 }
             }
+        }
+    }
+
+    const togglePrint = (el: string, select: boolean) => {
+        setPrinterAction(true);
+        console.log(el)
+        if (!orderId) {
+            console.log("заказа нет")
+            setSelectPhoto(el);
+            setShowOpenOrder(true);
+            setError(false);
+        } else {
+            if (!select) {
+                console.log("фото выбрано уже")
+                handleAddPhotoOrder(orderId, el, order, defoltProduct, true)
+            } else {
+                console.log("фото еще не добавлено")
+                handleTogglePrintOrder(orderId, el, order)
+            }
+            setPrinterAction(false);
         }
     }
 
@@ -222,9 +263,9 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
         setError(false);
     }
 
-    const checkSelectPhoto = (element) => {
+    const checkSelectPhoto = (el) => {
         if (order) {
-            const result = order.images.find(item => item.image === element);
+            const result = order.images.find(item => item.image === el);
             if (result) {
                 return true
             } else {
@@ -232,6 +273,33 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
             }
         } return false
     }
+
+    const checkPrintPhoto = (el) => {
+        if (order) {
+            const result = order.images.find(item => item.image === el);
+            console.log(result)
+            if (result) {
+                return result.print
+            } else {
+                return false
+            }
+        } return false
+    }
+
+    const handleAddAllPhotos = () => {
+        setAddAllPhotoAction(true);
+        if (!orderId) {
+            setShowOpenOrder(true);
+            return;
+        }
+        handleAddAllPhotoOrder(orderId, allImages, order, defoltProduct)
+        setAddAllPhotoAction(false);
+    };
+
+    // 2) Экспортируем её наружу через useImperativeHandle
+    useImperativeHandle(ref, () => ({
+        addAllPhotos: handleAddAllPhotos,
+    }));
 
     return (
         <div className={styles.PhotoGallery}>
@@ -274,6 +342,8 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
                                                 selectPhotos={order?.images ?? []}
                                                 toggleSelect={toggleSelect}
                                                 checkSelectPhoto={checkSelectPhoto} dir={directories.photos}
+                                                togglePrint={togglePrint}
+                                                checkPrintPhoto={checkPrintPhoto}
                                             />
                                         )}
                                     </div>
@@ -284,12 +354,17 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
                 </div>
             </div>
             {showModal && createPortal(
-                <PreviewPhoto dir={directories.photos}
-                    selectPhotos={order?.images ?? []} open={showModal}
+                <PreviewPhoto
+                    dir={directories.photos}
+                    open={showModal}
                     handleClose={handleClose} activeSlide={activeSlide} images={allImages}
                     toggleSelect={toggleSelect}
+                    togglePrint={togglePrint}
                     checkSelectPhoto={checkSelectPhoto}
-                />,
+                    checkPrintPhoto={checkPrintPhoto}
+                    mode={mode}
+                />
+                ,
                 document.body
             )}
             {showTypeProduct && createPortal(
@@ -313,5 +388,5 @@ export const PhotoGallery = memo(({ folderPath }: PhotoGalleryProps) => {
             )}
         </div>
     );
-});
+}));
 

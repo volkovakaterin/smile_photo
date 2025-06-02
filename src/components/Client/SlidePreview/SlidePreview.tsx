@@ -1,89 +1,39 @@
 'use client';
 
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import styles from './SlidePreview.module.scss';
 import path from 'path';
-import { ButtonWithContent } from '../UI/ButtonWithContent/ButtonWithContent';
-import Delete from '@/assets/icons/icon_trash.svg';
-import Basket from '@/assets/icons/icon_shop_white.svg';
-import { Watermark } from "antd";
 import Image from 'next/image';
 
 
 interface SlidePreviewProps {
-    toggleSelect?: (image: string, select: boolean, index: number) => void;
-    index: number;
     image: string;
-    checkSelectPhoto?: (element: any) => boolean;
-    selectPhotos: string[];
-    dir: string;
+    fromBasket?: boolean;
 }
 
-const normalizePath = (p) => p.replace(/\\/g, '/');
-const ensureLeadingSlash = (p: string) => (p.startsWith('/') ? p : `/${p}`);
-
-export const SlidePreview = memo(({ toggleSelect, index, image, checkSelectPhoto, selectPhotos, dir }: SlidePreviewProps) => {
-    const [btnParams, setBtnParams] = useState({ icon: Basket, backgroundColor: '#F4B45C' });
-    const [select, setSelect] = useState(false);
-    const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
+export const SlidePreview = memo(({ image,
+}: SlidePreviewProps) => {
     const imgRef = useRef<HTMLImageElement | null>(null);
-    const [normalizeImage,setNormalizeImage]=useState('');
-
-    const handleImageLoad = (index: number) => {
-        if (imgRef.current) {
-            const width = imgRef.current?.offsetWidth;
-            const height = imgRef.current?.offsetHeight;
-            setImageSize({ width, height });
-        }
-    };
-
 
     useEffect(() => {
-        setNormalizeImage(normalizePath(image));
-        if (checkSelectPhoto)
-            setSelect(checkSelectPhoto(normalizePath(image)));
-    }, [image, selectPhotos])
-
-
-    useEffect(() => {
-        if (select) {
-            setBtnParams({ icon: Delete, backgroundColor: '#fff' })
-        } else { setBtnParams({ icon: Basket, backgroundColor: '#F4B45C' }) }
-    }, [select])
-
+        console.log("SlidePreview")
+    }, [])
 
     return (
         <div className={styles.SlidePreview}>
-            <Watermark
-                style={{
-                    width: imageSize ? `${imageSize.width}px` : '100%',
-                    height: imageSize ? `${imageSize.height}px` : '100%',
-                }}
-                content={"Не оплачено"}
-                font={{ color: 'rgba(104, 106, 107, 0.4)', fontSize: 60, fontWeight: 700 }}
-                gap={[100, 150]}
-                width={400}
-                rotate={0}
-            >
-                <div key={index} className={styles.sliderItem}>
-                    <Image
-                    quality={10}
+            <div key={image} className={styles.sliderItem}>
+                {image ? <Image
                     fill
-                        className={styles.image}
-                        style={{ height: '100%', objectFit: 'contain' }}
-                        ref={imgRef}
-                        src={`/images${ensureLeadingSlash(dir)}/${normalizeImage}`}
-                        alt="Image"
-                        onLoad={() => handleImageLoad(index)}
-                    />
-                </div>
-            </Watermark>
-            <div className={styles.photoName}>{path.parse(normalizeImage).name}</div>
-            {toggleSelect && (<div className={styles.wrapperBtn} onClick={() => toggleSelect(normalizeImage, select, index)}>
-                <ButtonWithContent icon={btnParams.icon} backgroundColor={btnParams.backgroundColor}
-                    width={68} height={68} widthIcon={42} heightIcon={38}
-                />
-            </div>)}
+                    className={styles.image}
+                    style={{ height: '100%', objectFit: 'contain' }}
+                    ref={imgRef}
+                    src={`/api/dynamic-thumbnail?img=${image}&width=1500&height=1500`}
+                    alt="Image"
+                /> : null}
+            </div>
+            <div className={styles.photoNameWrap}>
+                <div className={styles.photoName}>{path.basename(image)}</div>
+            </div>
         </div>
     )
 });

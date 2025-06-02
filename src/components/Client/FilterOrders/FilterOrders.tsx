@@ -1,36 +1,33 @@
 import React from "react";
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import style from './FilterOrders.module.scss'
 
 type FilterByStatusProps = {
-    currentStatus: string | undefined;
-    onStatusChange: (status: string | undefined) => void;
+    currentStatus: string[];
+    onStatusChange: (status: string[]) => void;
 };
 
 const FilterByStatus: React.FC<FilterByStatusProps> = ({ currentStatus, onStatusChange }) => {
+    const changeActiveStatus = (status) => {
+        if (currentStatus.includes(status)) {
+            onStatusChange(currentStatus.filter(s => s !== status))
+        } else {
+            onStatusChange([...currentStatus, status])
 
-    const handleChange = (event: SelectChangeEvent) => {
-        if (event.target.value == '') {
-            onStatusChange(undefined);
-        } else { onStatusChange(event.target.value) };
-    };
+        }
+    }
 
     return (
-        <FormControl sx={{ minWidth: 200 }} size="small" className={style.FilterOrders}>
-            <InputLabel id="status-filter-label">Фильтр по статусу</InputLabel>
-            <Select
-                labelId="status-filter-label"
-                value={currentStatus ?? ''}
-                onChange={handleChange}
-                label="Filter by Status"
-            >
-                <MenuItem value="">Все</MenuItem>
-                <MenuItem value="open">Открыт</MenuItem>
-                <MenuItem value="created">Подтвержден</MenuItem>
-                <MenuItem value="closed">Закрыт</MenuItem>
-                <MenuItem value="paid">Оплачен</MenuItem>
-            </Select>
-        </FormControl>
+        <div className={style.FilterOrders}>
+            <button onClick={() => changeActiveStatus('open')}
+                className={`${style.button} ${style.button_open} ${currentStatus.includes('open') ? style.active : false}`}>Открыт</button>
+            <button onClick={() => changeActiveStatus('created')}
+                className={`${style.button} ${style.button_created} ${currentStatus.includes('created') ? style.active : false}`}>Подтвержден</button>
+            <button onClick={() => changeActiveStatus('paid')}
+                className={`${style.button} ${style.button_paid} ${currentStatus.includes('paid') ? style.active : false}`}>Оплачен</button>
+            <button onClick={() => changeActiveStatus('closed')}
+                className={`${style.button} ${style.button_closed} ${currentStatus.includes('closed') ? style.active : false}`}>Закрыт</button>
+
+        </div>
     );
 };
 

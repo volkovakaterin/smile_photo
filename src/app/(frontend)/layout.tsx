@@ -13,12 +13,15 @@ import { TheModal } from '@/components/Client/TheModal/TheModal';
 import { ButtonSecondary } from '@/components/Client/UI/ButtonSecondary/ButtonSecondary';
 import { usePathname, useRouter } from 'next/navigation';
 import { FunctionalModeProvider } from '@/providers/FunctionalMode';
+import { SearchByPhoneProvider } from '@/providers/SearchByPhone';
+import { ShowModalGlobalProvider, useShowModalGlobal } from '@/providers/ShowModal';
+import { CleanerProvider } from '@/providers/Cleaner';
 
 
 const queryClient = new QueryClient();
 
 function RootLayoutContent({ children }: { children: React.ReactNode }) {
-  const [showModal, setShowModal] = useState(false);
+  const { showModalGlobal, setShowModalGlobal } = useShowModalGlobal();
   const { resetOrder, orderId, mode } = useOrder();
   const [idleEnabled, setIdleEnabled] = useState(true);
   const router = useRouter();
@@ -35,7 +38,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
 
   const action = () => {
     if (orderId) {
-      setShowModal(true);
+      setShowModalGlobal(true);
     }
     else {
       router.push(`/`)
@@ -50,10 +53,10 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
 
-    if (showModal) {
+    if (showModalGlobal) {
       timer = setTimeout(() => {
         resetOrder();
-        setShowModal(false);
+        setShowModalGlobal(false);
         router.push(`/`);
       }, 30000);
     }
@@ -62,7 +65,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [showModal, resetOrder]);
+  }, [showModalGlobal, resetOrder]);
 
   return (
     <>
@@ -70,8 +73,8 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
         {children}
       </QueryClientProvider>
 
-      {showModal && (
-        <TheModal open={showModal} handleClose={() => setShowModal(false)} width={800}>
+      {showModalGlobal && (
+        <TheModal open={showModalGlobal} handleClose={() => setShowModalGlobal(false)} width={800}>
           <h3 style={{ marginTop: '50px', textAlign: 'center' }}>
             {mode == TYPE_MODE.CREAT ? `Хотите продолжить оформление заказа?` : `Хотите продолжить редактирование заказа?`}
           </h3>
@@ -84,18 +87,19 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
               justifyContent: 'center',
             }}
           >
-            <ButtonSecondary text="Продолжить" onClick={() => setShowModal(false)} />
+            <ButtonSecondary text="Продолжить" onClick={() => setShowModalGlobal(false)} />
             <ButtonSecondary
-              text="Начать новый заказ"
+              text="Вернуться в главное меню"
               onClick={() => {
                 resetOrder();
-                setShowModal(false);
+                setShowModalGlobal(false);
                 router.push(`/`)
               }}
             />
           </div>
         </TheModal>
       )}
+
     </>
   );
 }
@@ -106,9 +110,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head></head>
       <body className={`${Inter.variable}`}>
         <FunctionalModeProvider>
-          <OrderProvider>
-            <RootLayoutContent>{children}</RootLayoutContent>
-          </OrderProvider>
+          <CleanerProvider>
+            <OrderProvider>
+              <ShowModalGlobalProvider>
+                < SearchByPhoneProvider>
+                  <RootLayoutContent>{children}</RootLayoutContent>
+                </ SearchByPhoneProvider>
+              </ShowModalGlobalProvider>
+            </OrderProvider>
+          </CleanerProvider>
         </FunctionalModeProvider>
       </body>
     </html>

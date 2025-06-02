@@ -32,7 +32,8 @@
 }
 
 .productQuantity,
-.electronicFrame {
+.electronicFrame,
+.forAll {
   font-size: 16px;
   & li {
     display: flex;
@@ -63,7 +64,9 @@
 
 .photoName {
   width: 212px;
+  display: block;
   font-size: 13px;
+  overflow-wrap: break-word;
 }
 
 .tableOrder {

@@ -20,14 +20,18 @@ import { PreviewPhoto } from '@/components/Client/PreviewPhoto/PreviewPhoto';
 import { SliderPhotoProductType } from '@/components/Client/SliderPhotoProductType/SliderPhotoProductType';
 import { useProducts } from '@/hooks/Products/useGetProducts';
 import { useFunctionalMode } from '@/providers/FunctionalMode';
+import { useShowModalGlobal } from '@/providers/ShowModal';
+import { parseFoldersFromPath } from '@/services/parseFoldersFromPath';
+import { dir } from 'console';
 
 const EditOrder = () => {
     const router = useRouter();
     const [success, setSuccess] = useState(false);
     const [showModal, setShowModal] = useState(false);
-    const { orderId, quantityProducts, basketProducts, setBasketProducts, setQuantityProducts, setOrderId, directories, formatForAll, handleSetFormatForAll } = useOrder();
+    const { orderId, quantityProducts, basketProducts, setBasketProducts, setQuantityProducts, setOrderId, directories, formatForAll,
+        handleSetFormatForAll, setLastFolder, lastFolder } = useOrder();
     const { order } = useOrderId(orderId);
-    const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto } = useEditOrder();
+    const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto, handleTogglePrintOrder } = useEditOrder();
     const [telNumber, setTelNumber] = useState('');
     const [selectPhoto, setSelectPhoto] = useState<string | null>(null);
     const [activeSlideTypeProduct, setActiveSlideTypeProduct] = useState<number | null>(null);
@@ -36,6 +40,7 @@ const EditOrder = () => {
     const [currentImageProducts, setCurrentImageProducts] = useState(null);
     const { products } = useProducts();
     const { mode } = useFunctionalMode();
+    const { showModalGlobal, setShowModalGlobal } = useShowModalGlobal();
 
     const confirmOrder = () => {
         setTelNumber(order.tel_number)
@@ -44,17 +49,40 @@ const EditOrder = () => {
     }
 
     const addPhoto = () => {
+        const imagesCopy = [...order.images];
+        // Сортируем по возрастанию addedAt (старые → новые):
+        imagesCopy.sort((a, b) => {
+            return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
+        });
+        const latestImage = imagesCopy[imagesCopy.length - 1].image;
+        console.log(latestImage);
+        const pathFolders = parseFoldersFromPath(latestImage, directories.photos);
+        console.log(pathFolders);
+        console.log(lastFolder);
+        setLastFolder(prev => {
+            const base = prev.length > 0 ? [prev[0]] : [];
+            return [...base, ...pathFolders];
+        });
         router.push(`/search-photo`);
     }
 
-    const toggleSelect = (element: string, product?) => {
+    const toggleSelect = (el: string, product?) => {
         if (!orderId) {
             console.error('Заказ не открыт. Невозможно удалить фото.');
             return;
         }
         if (mode == 'with_formats' && product.product !== 'Фото без форматов') {
-            handleDeleteProduct(element, orderId, order, product)
-        } else { handleDeletePhoto(element, orderId, order) }
+            handleDeleteProduct(el, orderId, order, product)
+        } else { handleDeletePhoto(el, orderId, order) }
+    }
+
+    const togglePrint = (el: string) => {
+        if (!orderId) {
+            console.error('Заказ не открыт. Невозможно изменить значение.');
+            return;
+        } else {
+            handleTogglePrintOrder(orderId, el, order)
+        }
     }
 
     useEffect(() => {
@@ -126,10 +154,35 @@ const EditOrder = () => {
         return { date, time: timeWithoutSeconds };
     }
 
+    const navigationBack = () => {
+        router.back();
+    }
+
+    const navigationExit = () => {
+        if (orderId) {
+            setShowModalGlobal(true)
+        } else {
+            router.push('/');
+        }
+    }
+
+    const checkPrintPhoto = (el) => {
+        if (order) {
+            const result = order.images.find(item => item.image === el);
+            console.log(result)
+            if (result) {
+                return result.print
+            } else {
+                return false
+            }
+        } return false
+    }
+
     return (
         <>
             {!success && (<div>
-                <NavigationBar basket={true} totalQuantity={quantityProducts} />
+                <NavigationBar basket={true} totalQuantity={quantityProducts} navigationBack={navigationBack}
+                    btnExit={true} navigationExit={navigationExit} btnBack={true} />
                 {order && (<><span className={styles.breadcrumbs}>Заказы / {formattedDate(order.createdAt)} / {dateFn().time} / {order.tel_number}</span><div className={styles.EditOrder}>
                     <h2 className={styles.title}>Заказ № {order.tel_number}</h2>
                     <span className={styles.dateOrder}>{formattedDate(order.createdAt)} / {dateFn().time}</span>
@@ -146,6 +199,7 @@ const EditOrder = () => {
                                 mode={mode} />
                         )))) : (
                             <ProductBasket images={order.images}
+                                togglePrint={(element: string) => togglePrint(element)}
                                 toggleSelect={(element: string) => toggleSelect(element)}
                                 checkSelectPhoto={() => { return false; }}
                                 selectPhotos={[]}
@@ -176,11 +230,17 @@ const EditOrder = () => {
                 </TheModal>,
                 document.body)}
             {showPreviewModal && createPortal(
-                <PreviewPhoto dir={directories.photos}
-                    selectPhotos={order?.images ?? []} open={showPreviewModal}
+                <PreviewPhoto
+                    mode={mode}
+                    dir={directories.photos}
+                    toggleSelect={toggleSelect}
+                    togglePrint={togglePrint}
+                    open={showPreviewModal}
                     handleClose={handleClosePreviewModal}
                     activeSlide={activeSlide}
                     images={order ? order.images.map((image) => { return image.image }) : null}
+                    fromBasket
+                    checkPrintPhoto={checkPrintPhoto}
                 />,
                 document.body
             )}
