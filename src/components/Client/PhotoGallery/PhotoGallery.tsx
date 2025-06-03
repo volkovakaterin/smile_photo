@@ -23,9 +23,6 @@ import { SliderPhotoProductType } from '../SliderPhotoProductType/SliderPhotoPro
 import { useFunctionalMode } from '@/providers/FunctionalMode';
 
 
-
-const limit = 20;
-
 export interface PhotoGalleryHandle {
     addAllPhotos: () => void;
 }
@@ -34,6 +31,7 @@ interface PhotoGalleryProps {
     folderPath: string;
 }
 
+const normalizePath = (p) => p.replace(/\\/g, '/');
 
 export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProps>(({ folderPath }, ref) => {
     const [activeSlide, setActiveSlide] = useState<number | null>(null);
@@ -59,16 +57,21 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
     const [printerAction, setPrinterAction] = useState(false);
     const [addAllPhotoAction, setAddAllPhotoAction] = useState(false);
 
-    async function fetchImages({ pageParam = 0, folderPath }) {
+    async function fetchImages({ pageParam = 0, folderPath, limit }: {
+        pageParam?: number;
+        folderPath: string;
+        limit?: number;
+    }) {
         const photosDirectory = directories.photos;
-        const response = await axios.get('/api/check-images', {
-            params: {
-                folderPath,
-                photosDirectory,
-                offset: pageParam * limit,
-            },
-        });
-
+        const params: Record<string, any> = {
+            folderPath,
+            photosDirectory,
+            offset: pageParam * (limit ?? 0),
+        };
+        if (limit !== undefined) {
+            params.limit = limit;
+        }
+        const response = await axios.get('/api/check-images', { params });
         return {
             rows: response.data.images || [],
             nextOffset: response.data.hasImages ? pageParam + 1 : undefined,
@@ -83,7 +86,7 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
         isFetchingNextPage,
     } = useInfiniteQuery({
         queryKey: ['images'],
-        queryFn: ({ pageParam = 0 }) => fetchImages({ pageParam, folderPath }),
+        queryFn: ({ pageParam = 0 }) => fetchImages({ pageParam, folderPath, limit: 20 }),
         getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextOffset : undefined,
         initialPageParam: 0,
     });
@@ -162,15 +165,16 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
     const handleCreateOrder = (formData) => {
         const body = { tel_number: formData.phone.replace(/\s+/g, '') }
         mutate(body, {
-            onSuccess: (data: any) => {
+            onSuccess: async (data: any) => {
                 setShowOpenOrder(false);
                 setOrderId(data.doc.id);
                 if (mode == 'with_formats') {
                     setShowTypeProduct(true);
                 } else {
                     if (addAllPhotoAction) {
-                        console.log(data.doc.id, data.doc)
-                        handleAddAllPhotoOrder(data.doc.id, allImages, data.doc, defoltProduct)
+                        const result = await fetchImages({ pageParam: 0, folderPath })
+                        console.log(result.rows.length)
+                        handleAddAllPhotoOrder(data.doc.id, result.rows, data.doc, defoltProduct)
                     } else {
                         handleAddPhotoOrder(data.doc.id, selectPhoto, undefined, defoltProduct, printerAction);
                     }
@@ -198,7 +202,10 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
             setShowOpenOrder(true);
             setError(false);
         } else {
+            console.log(el, "toggleSelect")
+              console.log(select, "select")
             if (select) {
+                
                 handleDeletePhoto(el, orderId, order)
                 setActiveSlideTypeProduct(null);
             } else {
@@ -265,7 +272,12 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
 
     const checkSelectPhoto = (el) => {
         if (order) {
-            const result = order.images.find(item => item.image === el);
+            const result = order.images.find(item =>
+              {
+            console.log("Сравнение:", normalizePath(item.image), "===", el);
+            return normalizePath(item.image) === el;
+        }
+                );
             if (result) {
                 return true
             } else {
@@ -275,9 +287,13 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
     }
 
     const checkPrintPhoto = (el) => {
+       
         if (order) {
-            const result = order.images.find(item => item.image === el);
-            console.log(result)
+            const result = order.images.find(item => 
+            {console.log("СРАВНЕНИЕ:", normalizePath(item.image), "===", el)
+                return normalizePath(item.image) === el}
+                 );
+      
             if (result) {
                 return result.print
             } else {

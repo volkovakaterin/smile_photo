@@ -115,11 +115,13 @@ export const PreviewPhoto = memo(({ open, handleClose, activeSlide, images, togg
                     </Watermark>
 
                     <div className={styles.buttonsWrapper}>
+                        
                         {currentSlide !== null && (() => {
+                           
                             const normalized = normalizePath(decodeURIComponent(images[currentSlide]));
                             const isSelected = checkSelectPhoto?.(normalized) ?? true;
                             const isPrinted = checkPrintPhoto(normalized);
-
+ console.log(normalized,"print")
                             return (
                                 <>
                                     {mode !== 'with_formats' &&

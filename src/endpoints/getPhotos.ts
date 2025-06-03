@@ -7,11 +7,11 @@ const getPhotos: Endpoint = {
     path: '/check-images',
     method: 'get',
     handler: async (req) => {
-        const { folderPath, photosDirectory, offset = 0, limit = 20 } = req.query as {
+        const { folderPath, photosDirectory, offset = 0, limit } = req.query as {
             folderPath: string,
             photosDirectory: string,
             offset: number | string,
-            limit: number | string
+            limit?: number | string
         };
 
         if (!folderPath || typeof folderPath !== 'string') {
@@ -37,18 +37,55 @@ const getPhotos: Endpoint = {
                 });
 
             images.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
+
+            let paginatedImages: string[];
+            let hasNextPage = false; // по умолчанию нет следующей страницы
+
             const sortedImages = images.map(image => path.join(folderPath, image.file));
-            const paginatedImages = sortedImages.slice(Number(offset), Number(offset) + Number(limit));
-            const hasNextPage = paginatedImages.length < sortedImages.length;
+            // const paginatedImages = sortedImages.slice(Number(offset), Number(offset) + Number(limit));
+            // const hasNextPage = paginatedImages.length < sortedImages.length;
 
 
+            // const paginatedImagesNormPath = paginatedImages.map((img) => {
+            //     return `${photosDirectory}/${decodeURIComponent(img)}`;
+            // });
+
+            // if (paginatedImages.length > 0) {
+            //     return Response.json({ hasImages: true, images: paginatedImagesNormPath, hasNextPage }, { status: 200 });
+            // } else {
+            //     return Response.json({ hasImages: false }, { status: 200 });
+            // }
+
+            if (limit !== undefined) {
+                // Когда limit есть — делаем срез
+                const offNum = Number(offset);
+                const limNum = Number(limit);
+
+                paginatedImages = sortedImages.slice(offNum, offNum + limNum);
+                // hasNextPage = true, если обрезали не до конца
+                hasNextPage = offNum + limNum < sortedImages.length;
+            } else {
+                // Когда limit не пришёл — отдаём всё
+                paginatedImages = sortedImages;
+                hasNextPage = false;
+            }
+
+            // Преобразуем каждый путь в абсолютный, добавляя photosDirectory
             const paginatedImagesNormPath = paginatedImages.map((img) => {
                 return `${photosDirectory}/${decodeURIComponent(img)}`;
             });
 
             if (paginatedImages.length > 0) {
-                return Response.json({ hasImages: true, images: paginatedImagesNormPath, hasNextPage }, { status: 200 });
+                return Response.json(
+                    {
+                        hasImages: true,
+                        images: paginatedImagesNormPath,
+                        hasNextPage,
+                    },
+                    { status: 200 }
+                );
             } else {
+                // Пустой результат (если в этом диапазоне нет картинок)
                 return Response.json({ hasImages: false }, { status: 200 });
             }
         } catch (error) {

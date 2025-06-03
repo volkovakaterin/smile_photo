@@ -3,6 +3,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useQueryClient } from "@tanstack/react-query";
 import axios from 'axios';
 
+const normalizePath = (p) => p.replace(/\\/g, '/');
+
 export interface PhotoOrder {
     image: string,
     products: { product: string, quantity: number, label: string }[],
@@ -60,7 +62,7 @@ export const useEditOrder = () => {
 
     //Добавить все фото из папки (без форматов)
     const handleAddAllPhotoOrder = (orderId, images, order, defaultProduct) => {
-        console.log('ВСЕ ФОТО', images);
+        // console.log('ВСЕ ФОТО', images.length, images);
         if (!orderId) {
             console.error('Заказ не открыт. Невозможно добавить фото.');
             return;
@@ -72,10 +74,14 @@ export const useEditOrder = () => {
         }
 
         // 1) Собираем Set из уже добавленных путей к изображениям
-        const existingSet = new Set(order?.images.map(item => item.image));
+        const existingSet = new Set(order?.images.map(item =>normalizePath(item.image)));
+        // console.log(existingSet)
 
         // 2) Оставляем только те пути, которых нет в заказе
-        const toAdd = images.filter(imgPath => !existingSet.has(imgPath));
+        // const toAdd = images.filter(imgPath => !existingSet.has(normalizePath(imgPath)));
+        const toAdd = images
+  .filter(imgPath => !existingSet.has(normalizePath(imgPath)))
+  .map(imgPath => normalizePath(imgPath));
 
         if (!toAdd.length) {
             console.log('Нет новых фото для добавления — все уже в заказе.');
@@ -125,7 +131,7 @@ export const useEditOrder = () => {
         // 1. Клонируем массив и переключаем флаг print для нужной карточки
 
         const newImages: PhotoOrder[] = order.images.map(item => {
-            if (item.image === selectPhoto) {
+            if (normalizePath(item.image) === selectPhoto) {
                 return {
                     ...item,
                     print: !item.print,     // именно тут инвертируем
@@ -163,7 +169,7 @@ export const useEditOrder = () => {
         let images = [...order.images];
 
         if (!result.length) {
-            images = images.filter(item => item.image !== selectPhoto);
+            images = images.filter(item =>normalizePath(item.image)  !== selectPhoto);
 
             const body: PhotoOrder[] = images;
             editPhoto(
@@ -180,7 +186,7 @@ export const useEditOrder = () => {
             return;
         }
 
-        const existingIndex = images.findIndex(item => item.image === selectPhoto);
+        const existingIndex = images.findIndex(item => normalizePath(item.image) === selectPhoto);
 
         if (existingIndex !== -1) {
             images[existingIndex] = { ...images[existingIndex], products: result };
@@ -226,7 +232,7 @@ export const useEditOrder = () => {
             return item;
         });
 
-        if (!images.some(item => item.image == selectPhoto)) {
+        if (!images.some(item => normalizePath(item.image) == selectPhoto)) {
             updatedArray.push({
                 image: selectPhoto,
                 products: [{
@@ -292,10 +298,12 @@ export const useEditOrder = () => {
 
     //Удалить одно фото
     const handleDeletePhoto = (photo: string, orderId: string, order: { images: PhotoOrder[] }) => {
+        console.log(photo)
         const newImages = [...order.images];
-        const index = newImages.findIndex(item => item.image === photo);
+        const index = newImages.findIndex(item => normalizePath(item.image) === photo);
 
         if (index !== -1) {
+             console.log(index)
             newImages.splice(index, 1);
             editPhoto(
                 { photoOrder: newImages, id: orderId },
@@ -321,7 +329,7 @@ export const useEditOrder = () => {
         let images = [...order.images];
 
         const updatedArray = images.map((item) => {
-            const imageExists = item.image == selectPhoto;
+            const imageExists = normalizePath(item.image) == selectPhoto;
             if (imageExists) {
                 item.products.push({
                     product: format.id,
@@ -354,7 +362,7 @@ export const useEditOrder = () => {
         const images = [...order.images];
         const newImages = images
             .map(item => {
-                if (item.image === targetPhoto) {
+                if (normalizePath(item.image) === targetPhoto) {
                     const filteredProducts = item.products.filter(product => product.label !== targetProduct.product);
                     return {
                         ...item,
@@ -383,7 +391,7 @@ export const useEditOrder = () => {
         const images = [...order.images];
 
         const newImages = images.map(item => {
-            if (item.image === targetProduct.image) {
+            if (normalizePath(item.image) === targetProduct.image) {
                 return {
                     ...item,
                     products: item.products.map(product => {
@@ -416,7 +424,7 @@ export const useEditOrder = () => {
         const images = [...order.images];
 
         const newImages = images.map(item => {
-            if (item.image === targetProduct.image) {
+            if (normalizePath(item.image) === targetProduct.image) {
                 return {
                     ...item,
                     products: item.products.map(product => {
@@ -476,7 +484,7 @@ export const useEditOrder = () => {
         const images = [...order.images];
 
         const newImages = images.map(item => {
-            if (item.image === targetProduct.image) {
+            if (normalizePath(item.image) === targetProduct.image) {
                 return {
                     ...item,
                     products: item.products.map(product => {

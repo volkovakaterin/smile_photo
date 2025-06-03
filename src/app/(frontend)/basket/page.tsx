@@ -21,6 +21,8 @@ import { useFunctionalMode } from '@/providers/FunctionalMode';
 import { useRouter } from 'next/navigation';
 import { useShowModalGlobal } from '@/providers/ShowModal';
 
+const normalizePath = (p) => p.replace(/\\/g, '/');
+
 export type ProductBasketType = { product: string; photos: { image: string; quantity: number; }[]; }
 
 const Basket = () => {
@@ -69,6 +71,7 @@ const Basket = () => {
     }, [order])
 
     const toggleSelect = (el: string, product?) => {
+        console.log(el,"toggleSelect from basket")
         if (!orderId) {
             console.error('Заказ не открыт. Невозможно удалить фото.');
             return;
@@ -90,7 +93,7 @@ const Basket = () => {
 
     const checkPrintPhoto = (el) => {
         if (order) {
-            const result = order.images.find(item => item.image === el);
+            const result = order.images.find(item =>normalizePath( item.image) === el);
             console.log(result)
             if (result) {
                 return result.print
@@ -120,7 +123,7 @@ const Basket = () => {
     }
 
     const handleOpenPreviewModal = (image) => {
-        const index = order.images.findIndex(item => item.image === image);
+        const index = order.images.findIndex(item => normalizePath( item.image) === image);
         setShowPreviewModal(true);
         setActiveSlide(index);
     }
@@ -164,6 +167,12 @@ const Basket = () => {
             router.push('/');
         }
     }
+
+    useEffect(()=>{
+        if(!order?.images.length) {
+handleClosePreviewModal()
+        }
+    }, [order?.images])
 
     if (!order) return;
     return (

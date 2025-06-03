@@ -22,7 +22,8 @@ import { useProducts } from '@/hooks/Products/useGetProducts';
 import { useFunctionalMode } from '@/providers/FunctionalMode';
 import { useShowModalGlobal } from '@/providers/ShowModal';
 import { parseFoldersFromPath } from '@/services/parseFoldersFromPath';
-import { dir } from 'console';
+
+const normalizePath = (p) => p.replace(/\\/g, '/');
 
 const EditOrder = () => {
     const router = useRouter();
@@ -56,7 +57,7 @@ const EditOrder = () => {
         });
         const latestImage = imagesCopy[imagesCopy.length - 1].image;
         console.log(latestImage);
-        const pathFolders = parseFoldersFromPath(latestImage, directories.photos);
+        const pathFolders = parseFoldersFromPath(latestImage,normalizePath( directories.photos));
         console.log(pathFolders);
         console.log(lastFolder);
         setLastFolder(prev => {

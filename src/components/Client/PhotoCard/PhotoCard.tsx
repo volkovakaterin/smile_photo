@@ -46,7 +46,9 @@ export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelec
     const { mode } = useFunctionalMode();
 
     useEffect(() => {
+        console.log(image, "картинка карточки")
         const normalizeImage = normalizePath(image);
+
         setSelect(checkSelectPhoto(normalizeImage));
         if (!fromBasket) {
             setPrint(checkPrintPhoto(normalizeImage));
