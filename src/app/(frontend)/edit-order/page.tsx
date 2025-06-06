@@ -50,20 +50,22 @@ const EditOrder = () => {
     }
 
     const addPhoto = () => {
-        const imagesCopy = [...order.images];
-        // Сортируем по возрастанию addedAt (старые → новые):
-        imagesCopy.sort((a, b) => {
-            return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
-        });
-        const latestImage = imagesCopy[imagesCopy.length - 1].image;
-        console.log(latestImage);
-        const pathFolders = parseFoldersFromPath(latestImage,normalizePath( directories.photos));
-        console.log(pathFolders);
-        console.log(lastFolder);
-        setLastFolder(prev => {
-            const base = prev.length > 0 ? [prev[0]] : [];
-            return [...base, ...pathFolders];
-        });
+        if (order.images.length) {
+            const imagesCopy = [...order.images];
+            // Сортируем по возрастанию addedAt (старые → новые):
+            imagesCopy.sort((a, b) => {
+                return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
+            });
+            const latestImage = imagesCopy[imagesCopy.length - 1].image;
+            console.log(latestImage);
+            const pathFolders = parseFoldersFromPath(latestImage, normalizePath(directories.photos));
+            console.log(pathFolders);
+            console.log(lastFolder);
+            setLastFolder(prev => {
+                const base = prev.length > 0 ? [prev[0]] : [];
+                return [...base, ...pathFolders];
+            });
+        }
         router.push(`/search-photo`);
     }
 
@@ -178,6 +180,12 @@ const EditOrder = () => {
             }
         } return false
     }
+
+    useEffect(() => {
+        if (!order?.images.length) {
+            handleClosePreviewModal()
+        }
+    }, [order?.images])
 
     return (
         <>
