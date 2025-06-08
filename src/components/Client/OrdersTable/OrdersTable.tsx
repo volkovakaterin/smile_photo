@@ -192,7 +192,7 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
                                                                                 <strong>Фото:</strong>
                                                                                 <Image
                                                                                     quality={30}
-                                                                                    src={`/api/dynamic-thumbnail?img=${ensureLeadingSlash(image.image)}`}
+                                                                                        src={`/api/dynamic-thumbnail?img=${image.image}`}
                                                                                     alt={'photo'} width={212}
                                                                                     height={114}
                                                                                     className={styles.image} />
