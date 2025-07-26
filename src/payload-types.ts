@@ -20,6 +20,7 @@ export interface Config {
     orders: Order;
     products: Product;
     directories: Directory;
+    formats: Format;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -39,6 +40,7 @@ export interface Config {
     orders: OrdersSelect<false> | OrdersSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     directories: DirectoriesSelect<false> | DirectoriesSelect<true>;
+    formats: FormatsSelect<false> | FormatsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -55,12 +57,16 @@ export interface Config {
     footer: Footer;
     'functional-mode': FunctionalMode;
     'period-cleaner': PeriodCleaner;
+    'period-monitoring': PeriodMonitoring;
+    'order-creation-mode': OrderCreationMode;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'functional-mode': FunctionalModeSelect<false> | FunctionalModeSelect<true>;
     'period-cleaner': PeriodCleanerSelect<false> | PeriodCleanerSelect<true>;
+    'period-monitoring': PeriodMonitoringSelect<false> | PeriodMonitoringSelect<true>;
+    'order-creation-mode': OrderCreationModeSelect<false> | OrderCreationModeSelect<true>;
   };
   locale: null;
   user: User & {
@@ -633,6 +639,7 @@ export interface Folder {
   name: string;
   path?: string | null;
   with_photo?: boolean | null;
+  fs_created_at?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -642,11 +649,18 @@ export interface Folder {
  */
 export interface Order {
   id: string;
-  tel_number: string;
+  tel_number?: string | null;
+  folder_name?: string | null;
+  number_photos_in_folders?:
+    | {
+        folder_name?: string | null;
+        number_photos?: number | null;
+        id?: string | null;
+      }[]
+    | null;
   images?:
     | {
         image: string;
-        print?: boolean | null;
         addedAt: string;
         products?:
           | {
@@ -662,6 +676,7 @@ export interface Order {
       }[]
     | null;
   status: 'created' | 'open' | 'closed' | 'paid';
+  comment?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -674,7 +689,17 @@ export interface Product {
   name: string;
   format: 'electronic' | 'printed';
   copies: 'many_copies' | 'single_copy';
-  defolt: boolean;
+  size?: (string | null) | Format;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "formats".
+ */
+export interface Format {
+  id: string;
+  name: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -800,6 +825,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'directories';
         value: string | Directory;
+      } | null)
+    | ({
+        relationTo: 'formats';
+        value: string | Format;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1134,6 +1163,7 @@ export interface FoldersSelect<T extends boolean = true> {
   name?: T;
   path?: T;
   with_photo?: T;
+  fs_created_at?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1143,11 +1173,18 @@ export interface FoldersSelect<T extends boolean = true> {
  */
 export interface OrdersSelect<T extends boolean = true> {
   tel_number?: T;
+  folder_name?: T;
+  number_photos_in_folders?:
+    | T
+    | {
+        folder_name?: T;
+        number_photos?: T;
+        id?: T;
+      };
   images?:
     | T
     | {
         image?: T;
-        print?: T;
         addedAt?: T;
         products?:
           | T
@@ -1162,6 +1199,7 @@ export interface OrdersSelect<T extends boolean = true> {
         id?: T;
       };
   status?: T;
+  comment?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1173,7 +1211,7 @@ export interface ProductsSelect<T extends boolean = true> {
   name?: T;
   format?: T;
   copies?: T;
-  defolt?: T;
+  size?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1185,6 +1223,15 @@ export interface DirectoriesSelect<T extends boolean = true> {
   name?: T;
   path?: T;
   service_name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "formats_select".
+ */
+export interface FormatsSelect<T extends boolean = true> {
+  name?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1464,7 +1511,7 @@ export interface Footer {
  */
 export interface FunctionalMode {
   id: string;
-  mode: 'with_formats' | 'without_formats';
+  mode: 'without_formats';
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1475,6 +1522,26 @@ export interface FunctionalMode {
 export interface PeriodCleaner {
   id: string;
   period?: number | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "period-monitoring".
+ */
+export interface PeriodMonitoring {
+  id: string;
+  period?: number | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "order-creation-mode".
+ */
+export interface OrderCreationMode {
+  id: string;
+  mode: 'create_order_number' | 'create_order_folder';
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1540,6 +1607,26 @@ export interface FunctionalModeSelect<T extends boolean = true> {
  */
 export interface PeriodCleanerSelect<T extends boolean = true> {
   period?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "period-monitoring_select".
+ */
+export interface PeriodMonitoringSelect<T extends boolean = true> {
+  period?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "order-creation-mode_select".
+ */
+export interface OrderCreationModeSelect<T extends boolean = true> {
+  mode?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

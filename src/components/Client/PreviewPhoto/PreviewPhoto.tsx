@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useEffect, useState } from 'react';
-import Slider from 'react-slick';
+import Slider, { CustomArrowProps } from 'react-slick';
 import styles from './PreviewPhoto.module.scss';
 import Image from 'next/image';
 import PrevIcon from '@/assets/icons/Arrow_prev.svg';
@@ -13,8 +13,6 @@ import { SlidePreview } from '../SlidePreview/SlidePreview';
 import { CustomArrow } from '../UI/CustomArrow/CustomArrow';
 import { Watermark } from "antd";
 import { ButtonWithContent } from '../UI/ButtonWithContent/ButtonWithContent';
-import PrintWhite from '@/assets/icons/printer-white.svg';
-import PrintBlack from '@/assets/icons/printer-black.svg';
 import Delete from '@/assets/icons/icon_trash.svg';
 import Basket from '@/assets/icons/icon_shop_white.svg';
 
@@ -26,21 +24,52 @@ interface PreviewPhotoProps {
     activeSlide: number | null;
     images: string[];
     toggleSelect?: (image: string, select: boolean, index: number) => void;
-    togglePrint?: (image: string, select: boolean) => void;
     checkSelectPhoto?: (element: any) => boolean;
-    checkPrintPhoto: (element: any) => boolean;
-    dir: string;
     fromBasket?: boolean;
-    mode: string;
 }
 
+const PrevArrow = (props: CustomArrowProps) => {
+    const { currentSlide, onClick } = props;
+    const isHidden = currentSlide === 0;
+
+    return (
+        <CustomArrow onClick={onClick}>
+            <div className={`
+          ${styles.wrapperArrow} 
+          ${styles.arrowPrev} 
+          ${isHidden ? styles.hidden : ''}
+        `}>
+                <Image src={PrevIcon} alt="Prev" />
+            </div>
+        </CustomArrow>
+    );
+};
+
+const NextArrow = (props: CustomArrowProps) => {
+    const { currentSlide, slideCount, onClick } = props;
+    const isHidden = slideCount !== undefined && currentSlide === slideCount - 1;
+
+    return (
+        <CustomArrow onClick={onClick}>
+            <div className={`
+          ${styles.wrapperArrow} 
+          ${styles.arrowNext} 
+          ${isHidden ? styles.hidden : ''}
+        `}>
+                <Image src={NextIcon} alt="Next" />
+            </div>
+        </CustomArrow>
+    );
+};
+
 export const PreviewPhoto = memo(({ open, handleClose, activeSlide, images, toggleSelect, checkSelectPhoto,
-    dir, fromBasket, togglePrint, checkPrintPhoto, mode }: PreviewPhotoProps) => {
+    fromBasket }: PreviewPhotoProps) => {
     const [currentSlide, setCurrentSlide] = useState<number>(activeSlide ?? 0);
+
     const settings = {
         lazyLoad: 'ondemand',
         dots: false,
-        infinite: images?.length > 1,
+        infinite: false,
         speed: 300,
         slidesToShow: 1,
         slidesToScroll: 1,
@@ -48,33 +77,14 @@ export const PreviewPhoto = memo(({ open, handleClose, activeSlide, images, togg
         afterChange: (newIndex: number) => {
             setCurrentSlide(newIndex);
         },
-        prevArrow: (
-            <CustomArrow>
-                <div className={`${styles.wrapperArrow} ${styles.arrowPrev}`}>
-                    <Image src={PrevIcon} alt={'Prev'} ></Image>
-                </div>
-            </CustomArrow>
-
-        ),
-        nextArrow: (
-            <CustomArrow>
-                <div className={`${styles.wrapperArrow} ${styles.arrowNext}`}>
-                    <Image src={NextIcon} alt={'Next'}></Image>
-                </div>
-            </CustomArrow>
-
-        ),
+        prevArrow: <PrevArrow />,
+        nextArrow: <NextArrow />,
     };
 
     useEffect(() => {
-        console.log(activeSlide, "activeSlide")
         if (activeSlide !== null)
             setCurrentSlide(activeSlide);
     }, [activeSlide])
-
-    useEffect(() => {
-        console.log(currentSlide, "curentSlide")
-    }, [currentSlide])
 
 
     if (!open || activeSlide === null) return null;
@@ -115,31 +125,13 @@ export const PreviewPhoto = memo(({ open, handleClose, activeSlide, images, togg
                     </Watermark>
 
                     <div className={styles.buttonsWrapper}>
-                        
+
                         {currentSlide !== null && (() => {
-                           
+
                             const normalized = normalizePath(decodeURIComponent(images[currentSlide]));
                             const isSelected = checkSelectPhoto?.(normalized) ?? true;
-                            const isPrinted = checkPrintPhoto(normalized);
- console.log(normalized,"print")
                             return (
                                 <>
-                                    {mode !== 'with_formats' &&
-                                        <div
-                                            className={styles.wrapperbtnPrint}
-                                            onClick={() => togglePrint?.(normalized, isSelected)}
-                                        >
-                                            <ButtonWithContent
-                                                icon={isPrinted ? PrintWhite : PrintBlack}
-                                                backgroundColor={isPrinted ? '#56c456' : '#fff'}
-                                                width={68}
-                                                height={68}
-                                                widthIcon={42}
-                                                heightIcon={38}
-                                            />
-                                        </div>}
-
-
                                     <div
                                         className={styles.wrapperBtn}
                                         onClick={() => toggleSelect?.(normalized, isSelected, currentSlide)}

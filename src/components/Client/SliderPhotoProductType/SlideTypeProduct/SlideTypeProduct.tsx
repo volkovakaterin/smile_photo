@@ -20,13 +20,10 @@ export const SlideTypeProduct = memo(({ index, image, dir }: SlideTypeProductPro
             <div key={index} className={styles.sliderItem}>
                 <Image
                     fill
-                    //src={`/images${ensureLeadingSlash(dir)}/${normalizePath(image)}`}
                     src={`/api/dynamic-thumbnail?img=${image}`}
-                    // src={`${normalizePath(image)}`}
                     alt="Image"
                     className={styles.image} />
             </div>
-            {/* <div className={styles.photoName}>{path.parse(normalizePath(image)).name}</div> */}
             <div className={styles.photoName}>{path.basename(normalizePath(image))}</div>
         </div>
     )

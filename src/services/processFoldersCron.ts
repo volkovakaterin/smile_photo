@@ -5,19 +5,16 @@ import payload from 'payload';
 
 const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.tiff'];
 
-const processFolders = async () => {
-    const papka = await payload.find({
+const processFoldersCron = async () => {
+    const dirRes = await payload.find({
         collection: 'directories',
-        where: {
-            service_name: { equals: 'photo_directory' },
-        },
+        where: { service_name: { equals: 'photo_directory' } },
+        limit: 1,
     });
-
-    if (!papka.docs.length) {
+    if (!dirRes.docs.length) {
         throw new Error('Не найдена директория с service_name: photo_directory');
     }
-
-    const photosDirectory = `${papka.docs[0].path}/`;
+    const photosDirectory = dirRes.docs[0].path.replace(/\/?$/, '/');
 
     // Кеш всех папок из базы
     const allFolders = await payload.find({
@@ -26,10 +23,14 @@ const processFolders = async () => {
     });
 
     const folderCache = [...allFolders.docs]; // локальный кэш из базы
-    const foundFolders: { name: string; path: string }[] = []; // реальные папки на диске
+    const foundFolders: { name: string; path: string; fsCreatedAt: number }[] = []; // реальные папки на диске
 
     const traverseDirectory = async (directory: string) => {
+        if (!directory) {
+            throw new Error('Путь к директории не задан');
+        }
         const items = fs.readdirSync(directory, { withFileTypes: true });
+
 
         for (const item of items) {
             if (item.isDirectory()) {
@@ -39,8 +40,11 @@ const processFolders = async () => {
                     path.relative(photosDirectory, path.dirname(currentPath))
                 );
 
+                const stat = fs.statSync(currentPath);
+                const fsCreatedAt = stat.birthtimeMs;
+
                 // Сохраняем как "найденную" папку
-                foundFolders.push({ name: item.name, path: relativePath });
+                foundFolders.push({ name: item.name, path: relativePath, fsCreatedAt: fsCreatedAt, });
 
                 const subItems = fs.readdirSync(currentPath, { withFileTypes: true });
 
@@ -56,15 +60,18 @@ const processFolders = async () => {
                     );
 
                     if (existing) {
-                        if (existing.with_photo !== hasPhoto) {
+                        if (existing.with_photo !== hasPhoto ||
+                            (existing.fs_created_at as number) !== fsCreatedAt) {
                             await payload.update({
                                 collection: 'folders',
                                 id: existing.id,
                                 data: {
                                     with_photo: hasPhoto,
+                                    fs_created_at: fsCreatedAt,
                                 },
                             });
                             existing.with_photo = hasPhoto;
+                            existing.fs_created_at = fsCreatedAt;
                         }
                     } else {
                         const newFolder = await payload.create({
@@ -73,9 +80,11 @@ const processFolders = async () => {
                                 name: item.name,
                                 path: relativePath,
                                 with_photo: hasPhoto,
+                                fs_created_at: fsCreatedAt,
                             },
                         });
                         folderCache.push(newFolder);
+
                     }
 
                     await traverseDirectory(currentPath);
@@ -105,8 +114,7 @@ const processFolders = async () => {
             }
         }
     }
+    console.log("processFolders завершено")
 };
 
-export default processFolders;
-
-
+export default processFoldersCron;

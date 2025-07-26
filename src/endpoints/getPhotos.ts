@@ -42,19 +42,6 @@ const getPhotos: Endpoint = {
             let hasNextPage = false; // по умолчанию нет следующей страницы
 
             const sortedImages = images.map(image => path.join(folderPath, image.file));
-            // const paginatedImages = sortedImages.slice(Number(offset), Number(offset) + Number(limit));
-            // const hasNextPage = paginatedImages.length < sortedImages.length;
-
-
-            // const paginatedImagesNormPath = paginatedImages.map((img) => {
-            //     return `${photosDirectory}/${decodeURIComponent(img)}`;
-            // });
-
-            // if (paginatedImages.length > 0) {
-            //     return Response.json({ hasImages: true, images: paginatedImagesNormPath, hasNextPage }, { status: 200 });
-            // } else {
-            //     return Response.json({ hasImages: false }, { status: 200 });
-            // }
 
             if (limit !== undefined) {
                 // Когда limit есть — делаем срез

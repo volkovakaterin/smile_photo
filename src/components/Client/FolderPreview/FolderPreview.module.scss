@@ -1,0 +1,74 @@
+.folderWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.folder {
+  position: relative;
+  width: 116px;
+  height: 170px;
+  cursor: pointer;
+
+  .backWrapper {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 116px;
+    height: 142px;
+  }
+
+  .frontWrapper {
+    position: absolute;
+    top: -6px;
+    left: -3px;
+    width: 61px;
+    height: 176px;
+  }
+
+  .backImage,
+  .frontImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .thumbs {
+    position: absolute;
+    width: 100px;
+    height: 130px;
+    top: 0;
+    left: 0;
+  }
+
+  .thumb {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #cfcfcf;
+    object-fit: cover;
+    box-shadow: 1px 2px 9px 1px rgba(0, 0, 0, 0.37);
+    -webkit-box-shadow: 1px 2px 9px 1px rgba(0, 0, 0, 0.37);
+    -moz-box-shadow: 1px 2px 9px 1px rgba(0, 0, 0, 0.37);
+  }
+
+  //сдвиги для каждого слоя
+  .thumb-0 {
+    transform: translate(0px, 0px) skew(0deg, 10deg);
+    top: 10px !important;
+    left: 30px !important;
+  }
+  .thumb-1 {
+    top: 20px !important;
+    left: 20px !important;
+    width: 80px !important;
+    transform: translate(0px, 0px) skew(0deg, 20deg);
+  }
+}
+
+.label {
+  width: 116px;
+  display: block;
+  text-align: center;
+  overflow-wrap: break-word;
+}

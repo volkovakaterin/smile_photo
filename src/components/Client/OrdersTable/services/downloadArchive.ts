@@ -1,5 +1,5 @@
 
-export const downloadArchive = async (order, dir) => {
+export const downloadArchive = async (order, dir, products) => {
     try {
         const response = await fetch('/api/create-archive', {
             method: 'POST',
@@ -8,7 +8,7 @@ export const downloadArchive = async (order, dir) => {
                 // (по желанию) сообщить серверу, что ждём zip:
                 'Accept': 'application/zip',
             },
-            body: JSON.stringify({ order, dir }),
+            body: JSON.stringify({ order, dir, products }),
         });
         if (!response.ok) {
             const errText = await response.text();

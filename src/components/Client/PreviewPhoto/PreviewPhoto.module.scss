@@ -87,6 +87,12 @@
   right: 20px;
 }
 
+.arrowPrev.hidden,
+.arrowNext.hidden {
+  opacity: 0 !important;
+  transition: 0.2s;
+}
+
 /* контейнер для кнопок активного слайда */
 .buttonsWrapper {
   position: absolute;
@@ -95,12 +101,7 @@
   width: 100%;
   height: 68px;
 }
-.wrapperbtnPrint {
-  position: absolute;
-  bottom: 0;
-  left: 20px;
-  z-index: 10000; /* точно над Watermark */
-}
+
 .wrapperBtn {
   position: absolute;
   bottom: 0;

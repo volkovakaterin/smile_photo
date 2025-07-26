@@ -15,9 +15,6 @@ export const SlidePreview = memo(({ image,
 }: SlidePreviewProps) => {
     const imgRef = useRef<HTMLImageElement | null>(null);
 
-    useEffect(() => {
-        console.log("SlidePreview")
-    }, [])
 
     return (
         <div className={styles.SlidePreview}>

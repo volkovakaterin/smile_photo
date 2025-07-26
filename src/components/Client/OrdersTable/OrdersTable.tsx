@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, memo, useEffect } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Collapse, IconButton, Select, MenuItem, Button, Checkbox } from "@mui/material";
-import { ExpandLess, ExpandMore, Delete, BorderColor, Save, CloudDownload, DoneAll, ContentCopy } from "@mui/icons-material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Collapse, IconButton, Select, MenuItem, Button, Checkbox, TextField } from "@mui/material";
+import { ExpandLess, ExpandMore, Delete, BorderColor, Save, CloudDownload, ContentCopy } from "@mui/icons-material";
 import { useStatusChangeOrder } from "@/hooks/Order/useChangeStatusOrder";
 import { useDeleteOrder } from "@/hooks/Order/useDeleteOrder";
 import Image from 'next/image';
@@ -13,6 +13,7 @@ import { useOrder } from "@/providers/OrderProvider";
 import { downloadArchive } from "./services/downloadArchive";
 import { SelectProducts } from "../SelectProducts/SelectProducts";
 import { useProducts } from "@/hooks/Products/useGetProducts";
+import { useEditCommentOrder } from "@/hooks/Order/useEditCommentOrder";
 
 
 const ensureLeadingSlash = (p: string) => (p.startsWith('/') ? p : `/${p}`);
@@ -30,7 +31,6 @@ export type Product = {
 type Image = {
     id: string;
     image: string;
-    print: boolean;
     products: Product[];
 };
 
@@ -41,6 +41,9 @@ type Order = {
     createdAt: string;
     updatedAt: string;
     images: Image[];
+    comment: string;
+    folder_name: string;
+    number_photos_in_folders: { folder_name: string, number_photos: number }[],
 };
 
 type OrdersTableProps = {
@@ -48,19 +51,44 @@ type OrdersTableProps = {
     ordersTotal: number;
 };
 
-const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) => {
+const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
     const { handleChangeStatusOrder } = useStatusChangeOrder();
     const { mutate: deleteOrder } = useDeleteOrder();
+    const { mutate: editComment } = useEditCommentOrder();
     const { handleDeletePhoto, handleDeleteProduct, handleEditQuantityProduct,
-        handleCompletedProducts, handleCompletedAllProducts, handleElectronicFrame, addFormatOnePhoto,
-        applyFormatAllPhotos, handleTogglePrintOrder } = useEditOrder();
+        handleElectronicFrame, addFormatOnePhoto,
+        applyFormatAllPhotos, removeFormatAllPhotos } = useEditOrder();
     const [editingProduct, setEditingProduct] = useState<{ id: string; quantity: number | string, label: string } | null>(null);
     const { directories } = useOrder();
     const { products } = useProducts();
+    const [comments, setComments] = useState<Record<string, string>>(() =>
+        Object.fromEntries(orders.map(o => [o.id, o.comment || ""]))
+    );
+    const [expandedComments, setExpandedComments] = useState<string[]>([]);
+
+    const toggleComment = (orderId: string) => {
+        setExpandedComments(prev =>
+            prev.includes(orderId)
+                ? prev.filter(id => id !== orderId)
+                : [...prev, orderId]
+        );
+    };
+
+    const handleCommentChange = (orderId: string, text: string) => {
+        setComments(prev => ({ ...prev, [orderId]: text }));
+    };
+
+    const handleCommentSave = (orderId: string) => {
+        const text = comments[orderId];
+        editComment({ id: orderId, comment: text }, {
+            onError: err => console.error(err),
+        });
+        setExpandedComments(prev => prev.filter(id => id !== orderId));
+    };
 
     const handleDownloadProduct = (order) => {
-        downloadArchive(order, directories);
+        downloadArchive(order, directories, products.docs);
     }
 
     const toggleRow = (id: string) => {
@@ -82,10 +110,6 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
         }
     };
 
-    const togglePrint = (orderId, order, image) => {
-        handleTogglePrintOrder(orderId, image, order)
-    };
-
     const toggleFrame = (orderId, order, product: Product, image) => {
         handleElectronicFrame(orderId, order, { product, image })
     };
@@ -103,9 +127,11 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
             <Table>
                 <TableHead>
                     <TableRow>
-                        <TableCell>Номер телефона</TableCell>
+                        <TableCell>Номер телефона/<br />
+                            Имя папки</TableCell>
                         <TableCell>Статус</TableCell>
                         <TableCell>Кол-во фото</TableCell>
+                        <TableCell>Комментарий</TableCell>
                         <TableCell>Создан</TableCell>
                         <TableCell>Редактирован</TableCell>
                         <TableCell>Детали</TableCell>
@@ -113,12 +139,19 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
                 </TableHead>
                 <TableBody>
                     {orders.map(order => {
-                        // 1. Сортируем картинки по полю `print`
-                        const sortedImages = [...order.images].sort((a, b) => {
-                            if (a.print && !b.print) return -1;
-                            if (!a.print && b.print) return 1;
-                            return a.image.localeCompare(b.image, 'ru', { sensitivity: 'base' });
-                        });
+                        const isExpanded = expandedComments.includes(order.id);
+                        const raw = comments[order.id] || "";
+                        const short = raw.length > 10 ? raw.slice(0, 10) + "…" : raw;
+                        let photosInFolder = 0;
+                        {
+                            if (order.number_photos_in_folders) {
+                                photosInFolder = order.number_photos_in_folders.reduce(
+                                    (sum, item) => sum + item.number_photos,
+                                    0
+                                );
+                            }
+                        }
+
                         return (
                             <React.Fragment key={order.id}>
                                 <TableRow style={{
@@ -132,7 +165,7 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
                                                     ? '#d9e0ed'
                                                     : undefined
                                 }}>
-                                    <TableCell>{order.tel_number}</TableCell>
+                                    <TableCell>{order.tel_number}{order.folder_name}</TableCell>
                                     <TableCell>
                                         <Select
                                             value={order.status}
@@ -145,7 +178,50 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
                                             <MenuItem value="paid">Оплачен</MenuItem>
                                         </Select>
                                     </TableCell>
-                                    <TableCell>{order.images.length}</TableCell>
+                                    <TableCell> {photosInFolder !== 0
+                                        ? `${photosInFolder}/${order.images.length}`
+                                        : order.images.length
+                                    }</TableCell>
+
+                                    {/* === Ячейка «Комментарий» === */}
+                                    <TableCell>
+                                        {isExpanded ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <TextField
+                                                    multiline
+                                                    autoFocus
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    size="small"
+                                                    value={raw}
+                                                    onChange={e => handleCommentChange(order.id, e.target.value)}
+                                                    onBlur={() => handleCommentSave(order.id)}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-root': {
+                                                            padding: 0,
+                                                        },
+                                                        '& .MuiOutlinedInput-input': {
+                                                            fontSize: '0.875rem !important',
+                                                            lineHeight: '1.43 !important',
+                                                            color: 'black'
+                                                        },
+                                                    }}
+                                                />
+                                                <IconButton size="small" onClick={() => handleCommentSave(order.id)}>
+                                                    <Save fontSize="small" />
+                                                </IconButton>
+                                            </div>
+                                        ) : (
+                                            <Typography
+                                                variant="body2"
+                                                onClick={() => toggleComment(order.id)}
+                                                style={{ cursor: 'pointer', color: raw ? 'inherit' : '#999' }}
+                                            >
+                                                {raw ? short : "Добавить…"}
+                                            </Typography>
+                                        )}
+                                    </TableCell>
+
                                     <TableCell>{new Date(order.createdAt).toLocaleString()}</TableCell>
                                     <TableCell>{new Date(order.updatedAt).toLocaleString()}</TableCell>
                                     <TableCell>
@@ -183,7 +259,7 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
                                             <TableContainer component={Paper} className={styles.tableOrder}>
                                                 <Table>
                                                     <TableBody>
-                                                        {sortedImages.map((image) => (
+                                                        {order.images.map((image) => (
                                                             <React.Fragment key={image.id}>
                                                                 <TableRow className={styles.row}>
                                                                     <TableCell>
@@ -192,7 +268,7 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
                                                                                 <strong>Фото:</strong>
                                                                                 <Image
                                                                                     quality={30}
-                                                                                        src={`/api/dynamic-thumbnail?img=${image.image}`}
+                                                                                    src={`/api/dynamic-thumbnail?img=${image.image}`}
                                                                                     alt={'photo'} width={212}
                                                                                     height={114}
                                                                                     className={styles.image} />
@@ -210,20 +286,6 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
                                                                         </div>
                                                                         {products && <SelectProducts products={products.docs} selectProducts={image.products}
                                                                             onSelectionChange={(format) => handleSelectionChange(format, order.id, order, image.image)} />}
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        <div className={styles.wrapperPrint}>
-                                                                            <Typography>
-                                                                                <strong>Печать:</strong>
-                                                                            </Typography>
-                                                                            <Checkbox
-                                                                                checked={image.print}
-                                                                                onChange={() => togglePrint(order.id, order, image.image)}
-                                                                                color="secondary"
-                                                                                sx={{
-                                                                                    padding: "0px",
-                                                                                }} />
-                                                                        </div>
                                                                     </TableCell>
                                                                     {image.products.length ?
                                                                         <>
@@ -257,7 +319,23 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders, ordersTotal }) =
                                                                                                     color="primary"
                                                                                                     size="small"
                                                                                                     startIcon={<ContentCopy />}
-                                                                                                    onClick={() => applyFormatAllPhotos({ id: product.product, format: product.label }, order.id, order, image.image)}
+                                                                                                    onClick={() => applyFormatAllPhotos({ id: product.product, format: product.label },
+                                                                                                        order.id, order, image.image)}
+                                                                                                    sx={{
+                                                                                                        minWidth: "auto",
+                                                                                                        fontSize: '12px',
+                                                                                                        padding: "2px 6px",
+                                                                                                        "& .MuiButton-startIcon": { margin: 0 },
+                                                                                                    }}
+                                                                                                >
+                                                                                                </Button>
+                                                                                                <Button
+                                                                                                    variant="outlined"
+                                                                                                    color="error"
+                                                                                                    size="small"
+                                                                                                    startIcon={<Delete />}
+                                                                                                    onClick={() => removeFormatAllPhotos({ id: product.product, format: product.label },
+                                                                                                        order.id, order)}
                                                                                                     sx={{
                                                                                                         minWidth: "auto",
                                                                                                         fontSize: '12px',

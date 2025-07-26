@@ -31,7 +31,7 @@ const Basket = () => {
     const [success, setSuccess] = useState(false);
     const { orderId, quantityProducts, basketProducts, setBasketProducts, setQuantityProducts, directories, handleSetFormatForAll, formatForAll, lastFolder } = useOrder();
     const { order } = useOrderId(orderId);
-    const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto, handleTogglePrintOrder } = useEditOrder();
+    const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto } = useEditOrder();
     const { handleChangeStatusOrder } = useStatusChangeOrder();
     const [date, setDate] = useState<{ date: string, time: string }>({ date: "", time: "" });
     const [telNumber, setTelNumber] = useState('');
@@ -71,7 +71,6 @@ const Basket = () => {
     }, [order])
 
     const toggleSelect = (el: string, product?) => {
-        console.log(el,"toggleSelect from basket")
         if (!orderId) {
             console.error('Заказ не открыт. Невозможно удалить фото.');
             return;
@@ -79,28 +78,6 @@ const Basket = () => {
         if (mode == 'with_formats') {
             handleDeleteProduct(el, orderId, order, product);
         } else { handleDeletePhoto(el, orderId, order) }
-    }
-
-    const togglePrint = (el: string) => {
-        console.log(el)
-        if (!orderId) {
-            console.error('Заказ не открыт. Невозможно изменить значение.');
-            return;
-        } else {
-            handleTogglePrintOrder(orderId, el, order)
-        }
-    }
-
-    const checkPrintPhoto = (el) => {
-        if (order) {
-            const result = order.images.find(item =>normalizePath( item.image) === el);
-            console.log(result)
-            if (result) {
-                return result.print
-            } else {
-                return false
-            }
-        } return false
     }
 
     const handleOpenEdit = (photoProduct, product) => {
@@ -123,7 +100,7 @@ const Basket = () => {
     }
 
     const handleOpenPreviewModal = (image) => {
-        const index = order.images.findIndex(item => normalizePath( item.image) === image);
+        const index = order.images.findIndex(item => normalizePath(item.image) === image);
         setShowPreviewModal(true);
         setActiveSlide(index);
     }
@@ -168,9 +145,9 @@ const Basket = () => {
         }
     }
 
-    useEffect(()=>{
-        if(!order?.images.length) {
-handleClosePreviewModal()
+    useEffect(() => {
+        if (!order?.images.length) {
+            handleClosePreviewModal()
         }
     }, [order?.images])
 
@@ -182,7 +159,10 @@ handleClosePreviewModal()
                     btnExit={true} navigationExit={navigationExit} btnBack={true} />
                 <div className={styles.Basket}>
                     <h2 className={styles.title}>Корзина</h2>
-                    <span className={styles.dateOrder}>{date.date} / {date.time}</span>
+                    <div className={styles.infoWrapper}>
+                        <span className={styles.dateOrder}>{date.date} / {date.time}</span>
+                        {order.folder_name && <span className={styles.nameOrder}>Папка {order.folder_name}</span>}
+                    </div>
                     <div className={styles.wrapperProducts}>
                         {mode == 'with_formats' ? (basketProducts && (basketProducts.map((product, index) => (
                             <ProductBasket product={product}
@@ -196,7 +176,6 @@ handleClosePreviewModal()
                         ))))
                             : (
                                 <ProductBasket images={order.images}
-                                    togglePrint={(element: string) => togglePrint(element)}
                                     toggleSelect={(element: string) => toggleSelect(element)}
                                     checkSelectPhoto={() => { return false; }}
                                     selectPhotos={[]}
@@ -207,6 +186,7 @@ handleClosePreviewModal()
                     </div>
                 </div>
                 <div className={styles.wrapperLink} onClick={() => confirmOrder()}>
+                    <span style={{ width: '444px' }} className={styles.warning}>Внимание, перед нажатием кнопки &apos;Подтвердить заказ&apos; согласуйте формат печати с администратором</span>
                     <ButtonSecondary text='Подтвердить заказ' width={444} /></div>
             </div>)}
             {showModal && createPortal(
@@ -228,16 +208,12 @@ handleClosePreviewModal()
                 document.body)}
             {showPreviewModal && createPortal(
                 <PreviewPhoto
-                    mode={mode}
-                    dir={directories.photos}
                     toggleSelect={toggleSelect}
-                    togglePrint={togglePrint}
                     open={showPreviewModal}
                     handleClose={handleClosePreviewModal}
                     activeSlide={activeSlide}
                     images={order ? order.images.map((image) => { return image.image }) : null}
                     fromBasket
-                    checkPrintPhoto={checkPrintPhoto}
                 />,
                 document.body
             )}

@@ -26,6 +26,9 @@ import monitorFolders from './endpoints/monitoringFolders'
 import dynamicThumbnail from './endpoints/dynamicThumbnail'
 import { PeriodCleaner } from './PeriodCleaner'
 import processCleanerEndpoint from './endpoints/processCleaner'
+import Formats from './collections/Formats'
+import { PeriodMonitoring } from './PeriodMonitoring'
+import { OrderCreationMode } from './OrderCreationMode'
 
 
 
@@ -74,11 +77,11 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || '',
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Folders, Orders, Products, Directories],
+  collections: [Pages, Posts, Media, Categories, Users, Folders, Orders, Products, Directories, Formats],
   cors: ['http://localhost:3000', 'http://network:3000'],
   csrf: ['http://localhost:3000', 'http://network:3000'],
   endpoints: [getPhotos, createArchive, monitorFolders, dynamicThumbnail, processCleanerEndpoint],
-  globals: [Header, Footer, FunctionalMode, PeriodCleaner],
+  globals: [Header, Footer, FunctionalMode, PeriodCleaner, PeriodMonitoring, OrderCreationMode],
   plugins: [
     ...plugins,
     // storage-adapter-placeholder

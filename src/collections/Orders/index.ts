@@ -26,8 +26,37 @@ const Orders: CollectionConfig = {
         {
             name: 'tel_number',
             type: 'text',
-            required: true,
+            required: false,
             label: 'Номер телефона',
+            admin: {
+                readOnly: true,
+            },
+        },
+        {
+            name: 'folder_name',
+            type: 'text',
+            required: false,
+            label: 'Имя папки',
+            admin: {
+                readOnly: true,
+            },
+        },
+        {
+            name: 'number_photos_in_folders',
+            type: 'array',
+            required: false,
+            label: 'Выбранные папки с кол-вом фото в них',
+            fields: [{
+                name: 'folder_name',
+                type: 'text',
+                required: false,
+                label: 'Папка',
+            }, {
+                name: 'number_photos',
+                type: 'number',
+                required: false,
+                label: 'Фото в папке',
+            }],
             admin: {
                 readOnly: true,
             },
@@ -43,13 +72,6 @@ const Orders: CollectionConfig = {
                     type: 'text',
                     required: true,
                     label: 'Изображение',
-                },
-                {
-                    name: 'print',
-                    type: 'checkbox',
-                    required: false,
-                    label: 'Печать',
-                    defaultValue: false,
                 },
                 {
                     name: 'addedAt',
@@ -127,6 +149,13 @@ const Orders: CollectionConfig = {
             ],
             defaultValue: 'open',
             required: true,
+        },
+        {
+            name: 'comment',
+            type: 'text',
+            required: false,
+            label: 'Комментарий',
+
         },
     ],
     access: {

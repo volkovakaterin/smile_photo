@@ -1,7 +1,6 @@
 
 import fs from 'fs';
 import path from 'path';
-// import payload from 'payload';
 import { getPayload } from 'payload';
 import configPromise from '@payload-config'
 
@@ -18,7 +17,7 @@ const processFolders = async (dir) => {
     });
 
     const folderCache = [...allFolders.docs]; // локальный кэш из базы
-    const foundFolders: { name: string; path: string }[] = []; // реальные папки на диске
+    const foundFolders: { name: string; path: string; fsCreatedAt: number }[] = []; // реальные папки на диске
 
     const traverseDirectory = async (directory: string) => {
         if (!directory) {
@@ -35,8 +34,11 @@ const processFolders = async (dir) => {
                     path.relative(photosDirectory, path.dirname(currentPath))
                 );
 
+                const stat = fs.statSync(currentPath);
+                const fsCreatedAt = stat.birthtimeMs;
+
                 // Сохраняем как "найденную" папку
-                foundFolders.push({ name: item.name, path: relativePath });
+                foundFolders.push({ name: item.name, path: relativePath, fsCreatedAt: fsCreatedAt, });
 
                 const subItems = fs.readdirSync(currentPath, { withFileTypes: true });
 
@@ -52,15 +54,18 @@ const processFolders = async (dir) => {
                     );
 
                     if (existing) {
-                        if (existing.with_photo !== hasPhoto) {
+                        if (existing.with_photo !== hasPhoto ||
+                            (existing.fs_created_at as number) !== fsCreatedAt) {
                             await payload.update({
                                 collection: 'folders',
                                 id: existing.id,
                                 data: {
                                     with_photo: hasPhoto,
+                                    fs_created_at: fsCreatedAt,
                                 },
                             });
                             existing.with_photo = hasPhoto;
+                            existing.fs_created_at = fsCreatedAt;
                         }
                     } else {
                         const newFolder = await payload.create({
@@ -69,6 +74,7 @@ const processFolders = async (dir) => {
                                 name: item.name,
                                 path: relativePath,
                                 with_photo: hasPhoto,
+                                fs_created_at: fsCreatedAt,
                             },
                         });
                         folderCache.push(newFolder);

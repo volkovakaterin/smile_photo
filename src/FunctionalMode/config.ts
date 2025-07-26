@@ -9,16 +9,16 @@ export const FunctionalMode: GlobalConfig = {
             label: 'Переключение функционала',
             type: 'select',
             options: [
-                {
-                    label: 'С форматами',
-                    value: 'with_formats',
-                },
+                // {
+                //     label: 'С форматами',
+                //     value: 'with_formats',
+                // },
                 {
                     label: 'Без форматов',
                     value: 'without_formats',
-                },
+                }
             ],
-            defaultValue: 'with_formats',
+            defaultValue: 'create_order_number',
             required: true,
         },
     ],

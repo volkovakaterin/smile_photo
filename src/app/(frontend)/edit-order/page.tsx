@@ -32,7 +32,7 @@ const EditOrder = () => {
     const { orderId, quantityProducts, basketProducts, setBasketProducts, setQuantityProducts, setOrderId, directories, formatForAll,
         handleSetFormatForAll, setLastFolder, lastFolder } = useOrder();
     const { order } = useOrderId(orderId);
-    const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto, handleTogglePrintOrder } = useEditOrder();
+    const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto } = useEditOrder();
     const [telNumber, setTelNumber] = useState('');
     const [selectPhoto, setSelectPhoto] = useState<string | null>(null);
     const [activeSlideTypeProduct, setActiveSlideTypeProduct] = useState<number | null>(null);
@@ -57,10 +57,7 @@ const EditOrder = () => {
                 return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
             });
             const latestImage = imagesCopy[imagesCopy.length - 1].image;
-            console.log(latestImage);
             const pathFolders = parseFoldersFromPath(latestImage, normalizePath(directories.photos));
-            console.log(pathFolders);
-            console.log(lastFolder);
             setLastFolder(prev => {
                 const base = prev.length > 0 ? [prev[0]] : [];
                 return [...base, ...pathFolders];
@@ -77,15 +74,6 @@ const EditOrder = () => {
         if (mode == 'with_formats' && product.product !== 'Фото без форматов') {
             handleDeleteProduct(el, orderId, order, product)
         } else { handleDeletePhoto(el, orderId, order) }
-    }
-
-    const togglePrint = (el: string) => {
-        if (!orderId) {
-            console.error('Заказ не открыт. Невозможно изменить значение.');
-            return;
-        } else {
-            handleTogglePrintOrder(orderId, el, order)
-        }
     }
 
     useEffect(() => {
@@ -169,18 +157,6 @@ const EditOrder = () => {
         }
     }
 
-    const checkPrintPhoto = (el) => {
-        if (order) {
-            const result = order.images.find(item => item.image === el);
-            console.log(result)
-            if (result) {
-                return result.print
-            } else {
-                return false
-            }
-        } return false
-    }
-
     useEffect(() => {
         if (!order?.images.length) {
             handleClosePreviewModal()
@@ -208,7 +184,6 @@ const EditOrder = () => {
                                 mode={mode} />
                         )))) : (
                             <ProductBasket images={order.images}
-                                togglePrint={(element: string) => togglePrint(element)}
                                 toggleSelect={(element: string) => toggleSelect(element)}
                                 checkSelectPhoto={() => { return false; }}
                                 selectPhotos={[]}
@@ -240,16 +215,12 @@ const EditOrder = () => {
                 document.body)}
             {showPreviewModal && createPortal(
                 <PreviewPhoto
-                    mode={mode}
-                    dir={directories.photos}
                     toggleSelect={toggleSelect}
-                    togglePrint={togglePrint}
                     open={showPreviewModal}
                     handleClose={handleClosePreviewModal}
                     activeSlide={activeSlide}
                     images={order ? order.images.map((image) => { return image.image }) : null}
                     fromBasket
-                    checkPrintPhoto={checkPrintPhoto}
                 />,
                 document.body
             )}

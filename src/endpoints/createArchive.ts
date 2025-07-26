@@ -5,13 +5,19 @@ import { Endpoint, PayloadRequest } from 'payload';
 
 interface ImageGroup {
     image: string;
-    products: any[];
-    print?: boolean;
+    products: { label: string }[];
 }
 
 interface Order {
     id: string;
     images: ImageGroup[];
+}
+
+interface Product {
+    format: "printed" | "electronic"
+    id: string;
+    name: string;
+    size: { id: string, name: string }
 }
 
 const createArchive: Endpoint = {
@@ -21,17 +27,9 @@ const createArchive: Endpoint = {
         if (req.method !== 'POST') {
             return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
         }
-
-        // const { order } = req.query as {
-        //     order: {
-        //         id: string;
-        //         images: ImageGroup[];
-        //     };
-        // };
         // --- 1. Считываем весь ReadableStream из req.body в строку ---
         let rawBody: string;
         try {
-            // Вспособ, который работает в среде Payload/Next.js:
             const text = await new Response(req.body).text();
             rawBody = text;
         } catch (e) {
@@ -43,9 +41,9 @@ const createArchive: Endpoint = {
         }
 
         // --- 2. Парсим JSON из полученной строки ---
-        let parsed: { order: Order; dir: string };
+        let parsed: { order: Order; dir: string, products: Product[] };
         try {
-            parsed = JSON.parse(rawBody) as { order: Order; dir: string };
+            parsed = JSON.parse(rawBody) as { order: Order; dir: string, products: Product[] };
         } catch (e) {
             console.error('Ошибка JSON.parse:', e);
             return new Response(
@@ -54,11 +52,7 @@ const createArchive: Endpoint = {
             );
         }
 
-        const { order, dir } = parsed;
-
-
-
-        console.log("ЗАКАЗ", order)
+        const { order, dir, products } = parsed;
 
         if (!order) {
             return new Response(JSON.stringify({ error: 'Order is required' }), { status: 400 });
@@ -79,14 +73,31 @@ const createArchive: Endpoint = {
             if (orderData.images) {
                 for (const imageGroup of orderData.images) {
                     if (imageGroup.products) {
-                        const imagePath = decodeURIComponent(imageGroup.image);
-                        if (fs.existsSync(imagePath)) {
-                            archive.file(imagePath, { name: path.basename(imagePath) });
-                            // Если print === true, дублируем в папку "print/"
-                            if (imageGroup.print) {
-                                archive.file(imagePath, { name: `print/${path.basename(imagePath)}` });
+                        // 1) Собираем ID продуктов из imageGroup.products
+                        const prodIds = imageGroup.products.map(p => p.label);
+                        // 2) Находим объекты Product по этим ID
+                        const related = products.filter(p => prodIds.includes(p.name));
+                        if (related.length === 0) continue;
+
+                        // 3) Для каждого printed — отдельная папка по size.name
+                        const printedItems = related.filter(p => p.format === 'printed');
+                        for (const prod of printedItems) {
+                            if (prod.size) {
+                                const sizeName = prod.size.name.replace(/[/\\]/g, '_');
+                                const imagePath = decodeURIComponent(imageGroup.image);
+                                if (!fs.existsSync(imagePath)) continue;
+                                const fileName = path.basename(imagePath);
+                                archive.file(imagePath, { name: `${sizeName}/${fileName}` });
                             }
                         }
+
+                        // 4) Если есть electronic — кладём в корень
+                        if (related.some(p => p.format === 'electronic')) {
+                            const imagePath = decodeURIComponent(imageGroup.image);
+                            if (!fs.existsSync(imagePath)) continue;
+                            archive.file(imagePath, { name: path.basename(imagePath) });
+                        }
+
                     }
                 }
 

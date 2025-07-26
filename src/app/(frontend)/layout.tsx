@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import '@/styles/globals.scss';
 import { Inter } from '@/assets/fonts/fonts';
 import {
@@ -8,64 +8,22 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query';
 import { OrderProvider, TYPE_MODE, useOrder } from '@/providers/OrderProvider';
-import useIdle from '@/hooks/trackInactivity';
 import { TheModal } from '@/components/Client/TheModal/TheModal';
 import { ButtonSecondary } from '@/components/Client/UI/ButtonSecondary/ButtonSecondary';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FunctionalModeProvider } from '@/providers/FunctionalMode';
 import { SearchByPhoneProvider } from '@/providers/SearchByPhone';
 import { ShowModalGlobalProvider, useShowModalGlobal } from '@/providers/ShowModal';
 import { CleanerProvider } from '@/providers/Cleaner';
+import { OrderCreateModeProvider } from '@/providers/OrderCreateMode';
 
 
 const queryClient = new QueryClient();
 
 function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const { showModalGlobal, setShowModalGlobal } = useShowModalGlobal();
-  const { resetOrder, orderId, mode } = useOrder();
-  const [idleEnabled, setIdleEnabled] = useState(true);
+  const { resetOrder, mode } = useOrder();
   const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    if (!pathname) return;
-    if (pathname.includes('/super-admin')) {
-      setIdleEnabled(false);
-    } else {
-      setIdleEnabled(true);
-    }
-  }, [pathname]);
-
-  const action = () => {
-    if (orderId) {
-      setShowModalGlobal(true);
-    }
-    else {
-      router.push(`/`)
-    }
-  };
-
-  useIdle({
-    timeout: idleEnabled ? 60000 : 0,
-    action: idleEnabled ? action : undefined,
-  });
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-
-    if (showModalGlobal) {
-      timer = setTimeout(() => {
-        resetOrder();
-        setShowModalGlobal(false);
-        router.push(`/`);
-      }, 30000);
-    }
-
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [showModalGlobal, resetOrder]);
 
   return (
     <>
@@ -109,17 +67,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <head></head>
       <body className={`${Inter.variable}`}>
-        <FunctionalModeProvider>
-          <CleanerProvider>
-            <OrderProvider>
-              <ShowModalGlobalProvider>
-                < SearchByPhoneProvider>
-                  <RootLayoutContent>{children}</RootLayoutContent>
-                </ SearchByPhoneProvider>
-              </ShowModalGlobalProvider>
-            </OrderProvider>
-          </CleanerProvider>
-        </FunctionalModeProvider>
+        <OrderCreateModeProvider>
+          <FunctionalModeProvider>
+            <CleanerProvider>
+              <OrderProvider>
+                <ShowModalGlobalProvider>
+                  < SearchByPhoneProvider>
+                    <RootLayoutContent>{children}</RootLayoutContent>
+                  </ SearchByPhoneProvider>
+                </ShowModalGlobalProvider>
+              </OrderProvider>
+            </CleanerProvider>
+          </FunctionalModeProvider>
+        </OrderCreateModeProvider>
       </body>
     </html>
   );

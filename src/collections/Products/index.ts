@@ -3,8 +3,8 @@ import { CollectionConfig } from 'payload';
 const Products: CollectionConfig = {
     slug: 'products',
     labels: {
-        singular: 'Формат',
-        plural: 'Форматы',
+        singular: 'Товар',
+        plural: 'Товары',
     },
     admin: {
         useAsTitle: 'name',
@@ -14,13 +14,13 @@ const Products: CollectionConfig = {
             name: 'name',
             type: 'text',
             required: true,
-            label: 'Название формата',
+            label: 'Название товара',
         },
         {
             name: 'format',
             type: 'select',
             required: true,
-            label: 'Тип формата',
+            label: 'Тип товара',
             options: [
                 {
                     label: 'Электронный',
@@ -32,7 +32,7 @@ const Products: CollectionConfig = {
                 },
             ],
             admin: {
-                description: 'Выберите тип формат',
+                description: 'Выберите тип товара',
             },
         },
         {
@@ -55,10 +55,18 @@ const Products: CollectionConfig = {
             },
         },
         {
-            name: 'defolt',
-            type: 'checkbox',
-            required: true,
-            label: 'Формат по умолчанию',
+            name: 'size',
+            type: 'relationship',
+            relationTo: 'formats',
+            hasMany: false,
+            required: false,
+            label: 'Формат',
+            admin: {
+                description: 'Выберите формат из справочника Formats',
+                allowCreate: false,
+                allowEdit: false,
+
+            },
         },
 
     ],

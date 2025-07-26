@@ -35,6 +35,15 @@ const Folders: CollectionConfig = {
                 readOnly: true,
             },
         },
+        {
+            name: 'fs_created_at',
+            type: 'number',
+            label: 'Время создания (FS)',
+            admin: {
+                readOnly: true,
+            },
+        },
+
     ],
     access: {
         read: () => true,

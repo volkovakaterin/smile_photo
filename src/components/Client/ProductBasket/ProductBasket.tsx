@@ -6,7 +6,6 @@ import { ProductBasketType } from '@/app/(frontend)/basket/page';
 
 
 interface ProductBasketProps {
-    togglePrint?: (el: string, select: boolean) => void;
     toggleSelect: (element: string, select: boolean) => void;
     checkSelectPhoto: (element: any) => boolean;
     selectPhotos: string[];
@@ -20,7 +19,7 @@ interface ProductBasketProps {
 
 
 const ProductBasket = ({ toggleSelect, checkSelectPhoto, selectPhotos, product, onOpen, dir,
-    openPreviewModal, images, mode, togglePrint }: ProductBasketProps) => {
+    openPreviewModal, images, mode }: ProductBasketProps) => {
     const [cards, setCards] = useState<{ image: string }[] | { image: string; quantity: number }[]>([]);
 
     useEffect(() => {
@@ -36,12 +35,9 @@ const ProductBasket = ({ toggleSelect, checkSelectPhoto, selectPhotos, product, 
             <div className={styles.wrapperPhoto}>
                 {cards.map((image, index) => (
                     <PhotoCard key={index} fromBasket={true} image={image.image}
-                        printFromBasket={image.print}
                         quantity={image.quantity}
                         index={index} toggleSelect={toggleSelect}
-                        togglePrint={togglePrint}
                         checkSelectPhoto={checkSelectPhoto}
-                        checkPrintPhoto={() => { return false; }}
                         selectPhotos={selectPhotos}
                         onOpen={onOpen ? () => onOpen(image) : undefined}
                         openPreviewModal={openPreviewModal}
