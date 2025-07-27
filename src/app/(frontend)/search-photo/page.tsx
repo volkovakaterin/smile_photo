@@ -11,7 +11,6 @@ import Link from 'next/link';
 import { NavigationBar } from '@/components/Client/NavigationBar/NavigationBar';
 import { TYPE_MODE, useOrder } from '@/providers/OrderProvider';
 import { useRouter } from 'next/navigation';
-import { TheModal } from '@/components/Client/TheModal/TheModal';
 import { useOrderId } from '@/hooks/Order/useOrderId';
 import { useShowModalGlobal } from '@/providers/ShowModal';
 import { FolderPreview } from '@/components/Client/FolderPreview/FolderPreview';
@@ -116,8 +115,11 @@ const SearchPhoto = () => {
         if (!hasImages) {
             setPhotoInFolder(0)
         }
-        fetchFolders(currentPath);
-    }, [currentPath]);
+        if(directories.photos) {
+           fetchFolders(currentPath);  
+        }
+       
+    }, [currentPath, directories.photos]);
 
     const handleFolderClick = (folder) => {
         // Обновляем текущий путь и хлебные крошки

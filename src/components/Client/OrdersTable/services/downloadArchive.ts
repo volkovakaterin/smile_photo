@@ -25,7 +25,7 @@ export const downloadArchive = async (order, dir, products) => {
         // 5. Создаём <a> с нужными атрибутами и кликаем по нему
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${order.tel_number}.zip`;
+        a.download = `${order.tel_number?.trim() ? order.tel_number : order.folder_name}.zip`;
         document.body.append(a);
         a.click();
         a.remove();
