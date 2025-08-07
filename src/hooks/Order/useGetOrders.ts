@@ -17,39 +17,58 @@ export interface OrdersResponse<T> {
     nextPage: number | null
 }
 
-export const getOrders = async (status?: string | string[], phone?: string, page = 1, rowsPerPage = 100000): Promise<Response> => {
+export const getOrders = async (
+    status?: string | string[],
+    search?: { phone?: string; nameFolder?: string },
+    page = 1,
+    rowsPerPage = 100000
+): Promise<Response> => {
     const query: any = {};
 
     if (status) {
-        if (Array.isArray(status)) {
-            query.status = { in: status };
-        } else {
-            query.status = { equals: status };
-        }
-    }
-    if (phone) {
-        query.tel_number = { equals: phone };
+        query.status = Array.isArray(status)
+            ? { in: status }
+            : { equals: status };
     }
 
+    if (search?.phone) {
+        query.tel_number = { equals: search.phone };
+    }
+
+    if (search?.nameFolder) {
+        query.folder_name = { equals: search.nameFolder };
+    }
 
     const stringifiedQuery = stringify(
         {
             where: query,
-            page: page,
+            page,
             limit: rowsPerPage,
         },
-        { addQueryPrefix: true },
-    )
+        { addQueryPrefix: true }
+    );
+
     const response = await axios.get<Response>(`/api/orders${stringifiedQuery}`);
     return response.data;
 };
 
-export function useOrders(status?: string | string[], phone?: string, page = 1, rowsPerPage = 100000) {
-    const { data, isLoading, error, isSuccess, isFetching, refetch } = useQuery({
-        queryKey: ['orders', status, phone, page, rowsPerPage],
-        queryFn: () => getOrders(status, phone, page, rowsPerPage),
+export function useOrders(
+    status?: string | string[],
+    search?: { phone?: string; nameFolder?: string },
+    page = 1,
+    rowsPerPage = 100000
+) {
+    const { data, refetch, isLoading, isSuccess, error } = useQuery({
+        queryKey: ['orders', status, search, page, rowsPerPage],
+        queryFn: () => getOrders(status, search, page, rowsPerPage),
         select: (data: any) => data,
     });
 
-    return { orders: data, refetch }
+    return {
+        orders: data,
+        refetch,
+        isLoading,
+        isSuccess,
+        error,
+    };
 }

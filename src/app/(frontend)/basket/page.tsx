@@ -34,7 +34,7 @@ const Basket = () => {
     const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto } = useEditOrder();
     const { handleChangeStatusOrder } = useStatusChangeOrder();
     const [date, setDate] = useState<{ date: string, time: string }>({ date: "", time: "" });
-    const [telNumber, setTelNumber] = useState('');
+    const [orderName, setOrderName] = useState('');
     const [activeSlideTypeProduct, setActiveSlideTypeProduct] = useState<number | null>(null);
     const [activeSlide, setActiveSlide] = useState<number | null>(null);
     const [selectPhoto, setSelectPhoto] = useState<string | null>(null);
@@ -45,7 +45,7 @@ const Basket = () => {
     const router = useRouter();
 
     const confirmOrder = () => {
-        setTelNumber(order.tel_number)
+        setOrderName(order.tel_number || order.folder_name)
         handleChangeStatusOrder('created', orderId);
         setSuccess(true);
     }
@@ -161,7 +161,10 @@ const Basket = () => {
                     <h2 className={styles.title}>Корзина</h2>
                     <div className={styles.infoWrapper}>
                         <span className={styles.dateOrder}>{date.date} / {date.time}</span>
-                        {order.folder_name && <span className={styles.nameOrder}>Папка {order.folder_name}</span>}
+                        {order.folder_name && <span className={styles.nameOrder}>Заказ № {order.folder_name}</span>}
+                        {order.tel_number && <span className={styles.nameOrder}>Заказ № {order.tel_number}</span>}
+                        {order.number_photos_in_folders && (<span className={styles.nameOrder}>Всего фото в папке {order.number_photos_in_folders?.reduce(
+                            (sum, item) => sum + item.number_photos, 0)} </span>)}
                     </div>
                     <div className={styles.wrapperProducts}>
                         {mode == 'with_formats' ? (basketProducts && (basketProducts.map((product, index) => (
@@ -217,7 +220,7 @@ const Basket = () => {
                 />,
                 document.body
             )}
-            {success && (<SuccessOrder title={'Супер! Ваш заказ сформирован.'} tel_number={telNumber} />)}
+            {success && (<SuccessOrder title={'Супер! Ваш заказ сформирован.'} order_name={orderName} />)}
         </div>
     );
 };

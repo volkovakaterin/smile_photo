@@ -28,6 +28,7 @@ export type Order = {
     createdAt: string;
     updatedAt: string;
     images: Image[];
+    folder_name?: string;
 };
 
 type GroupedOrders = {
@@ -63,7 +64,7 @@ const OrdersFoundList = ({ orders }: OrdersFoundListProps) => {
                         {date.orders.map((order, index) => (
                             <div key={index} onClick={() => goToOrder(order.id)}>
                                 <li className={styles.wrapperOrder} >
-                                    <span className={styles.tel}>{order.tel_number}</span>
+                                    <span className={styles.tel}>{order.tel_number || order.folder_name}</span>
                                     <span className={styles.time}>{formattedTime(order.createdAt)}</span>
                                 </li>
                             </div>

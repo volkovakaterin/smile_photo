@@ -6,16 +6,16 @@ import { ButtonSecondary } from '@/components/Client/UI/ButtonSecondary/ButtonSe
 
 type SuccessOrderProps = {
     title: string;
-    tel_number: string;
+    order_name: string;
 }
 
-const SuccessOrder = ({ title, tel_number }: SuccessOrderProps) => {
+const SuccessOrder = ({ title, order_name }: SuccessOrderProps) => {
 
     return (
         <div>
             <div className={styles.SuccessOrder}>
                 <h2 className={styles.title}>{title}</h2>
-                <h3 className={styles.title}>Номер заказа : {tel_number}</h3>
+                <h3 className={styles.title}>Номер заказа : {order_name}</h3>
                 <span className={styles.text}>Обратитесь к администратору чтобы оплатить его</span>
                 <Link className={styles.wrapperBtn} href={'/'} >
                     <ButtonSecondary text='Вернуться на главный экран' width={559} /></Link>

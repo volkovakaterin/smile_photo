@@ -8,11 +8,11 @@ import OrdersFoundList from '@/components/Client/OrdersFoundList/OrdersFoundList
 import { useOrders } from '@/hooks/Order/useGetOrders';
 import { useOrder } from '@/providers/OrderProvider';
 import { useRouter } from 'next/navigation';
-import { useSearchByPhone } from '@/providers/SearchByPhone';
+import { useSearchByPhoneOrFolder } from '@/providers/SearchByPhoneOrFolder';
 
 const SearchOrder = () => {
-    const { searhByPhone, setSearchByPhone } = useSearchByPhone();
-    const { orders } = useOrders(["open", "created"], searhByPhone);
+    const { searhByPhoneOrFolder, setSearchByPhoneOrFolder } = useSearchByPhoneOrFolder();
+    const { orders } = useOrders(["open", "created"], searhByPhoneOrFolder || undefined);
     const { setOrderId } = useOrder();
 
     const router = useRouter();
@@ -30,8 +30,8 @@ const SearchOrder = () => {
             <NavigationBar btnExit={true} navigationExit={navigationExit} />
             <div className={styles.SearchOrder}>
                 <h2 className={styles.title}>Выберите заказ для редактирования</h2>
-                < FormSearchOrder onSearchByPhone={setSearchByPhone} searhByPhone={searhByPhone} />
-                {searhByPhone ? (
+                < FormSearchOrder onSearch={setSearchByPhoneOrFolder} orderName={searhByPhoneOrFolder} />
+                {searhByPhoneOrFolder ? (
                     orders && orders.docs && orders.docs.length > 0 ? (
                         <OrdersFoundList orders={orders.docs} />
                     ) : (

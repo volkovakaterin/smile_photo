@@ -1,12 +1,10 @@
 'use client';
 
-import { ReactNode, memo, useState } from 'react';
-import { Controller, ControllerFieldState, ControllerRenderProps, FieldErrors, useForm } from 'react-hook-form';
+import { memo } from 'react';
+import { ControllerFieldState, ControllerRenderProps, FieldErrors } from 'react-hook-form';
 import Image from 'next/image';
 import styles from './InputPhone.module.scss';
-import Arrow from '@/assets/icons/Arrow_white.svg';
 import Loupe from '@/assets/icons/loupe.svg';
-import { FormData } from '../../FormCreateOrder/FormCreateOrder';
 import { MuiTelInput, matchIsValidTel } from 'mui-tel-input';
 
 export enum TYPE_INPUT {
@@ -15,7 +13,7 @@ export enum TYPE_INPUT {
 }
 
 interface InputPhoneProps {
-    field: ControllerRenderProps<FormData, 'phone'>;
+    field: ControllerRenderProps<any, 'phone'>;
     fieldState: ControllerFieldState;
     errors: FieldErrors;
     setPhoneExistsError: (value: null) => void;

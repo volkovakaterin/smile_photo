@@ -14,13 +14,15 @@ import { useRouter } from 'next/navigation';
 import { useOrderId } from '@/hooks/Order/useOrderId';
 import { useShowModalGlobal } from '@/providers/ShowModal';
 import { FolderPreview } from '@/components/Client/FolderPreview/FolderPreview';
+import { sortFoldersByName } from '@/services/sortFoldersByName';
 
-interface Folder {
+export interface Folder {
     name: string;
     path: string;
     id?: string;
     with_photo?: boolean;
     createdAt: Date;
+    fs_created_at?: number;
 }
 
 interface Breadcrumb {
@@ -65,21 +67,8 @@ const SearchPhoto = () => {
             const response = await axios.get(`/api/folders${stringifiedQuery}`
             );
 
-            //Сортировка папок      
             const docs = response.data.docs;
-            docs.sort((a, b) => {
-                // 1) по времени создания (число ms) — более новые первыми
-                const delta = (b.fs_created_at ?? 0) - (a.fs_created_at ?? 0);
-                if (delta !== 0) return delta;
-
-                // 2) при совпадении дат — натурально по имени
-                return a.name.localeCompare(b.name, 'ru', {
-                    numeric: true,
-                    sensitivity: 'base',
-                });
-            });
-
-            setFolders(docs);
+            setFolders(sortFoldersByName(docs));
             setIsLoadingFolder(false);
         } catch (error) {
             console.error('Ошибка загрузки папок:', error);
@@ -115,10 +104,10 @@ const SearchPhoto = () => {
         if (!hasImages) {
             setPhotoInFolder(0)
         }
-        if(directories.photos) {
-           fetchFolders(currentPath);  
+        if (directories.photos) {
+            fetchFolders(currentPath);
         }
-       
+
     }, [currentPath, directories.photos]);
 
     const handleFolderClick = (folder) => {

@@ -5,16 +5,16 @@ import styles from './style.module.scss';
 import { useOrder } from '@/providers/OrderProvider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { useSearchByPhone } from '@/providers/SearchByPhone';
+import { useSearchByPhoneOrFolder } from '@/providers/SearchByPhoneOrFolder';
 
 export default function HomePage() {
     const { resetOrder } = useOrder();
-    const { searhByPhone, setSearchByPhone } = useSearchByPhone();
+    const { searhByPhoneOrFolder, setSearchByPhoneOrFolder } = useSearchByPhoneOrFolder();
     const router = useRouter();
 
     useEffect(() => {
         resetOrder();
-        setSearchByPhone('')
+        setSearchByPhoneOrFolder(null)
     }, [])
 
     const goSearchPhoto = () => {

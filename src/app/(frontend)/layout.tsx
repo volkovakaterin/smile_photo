@@ -12,7 +12,7 @@ import { TheModal } from '@/components/Client/TheModal/TheModal';
 import { ButtonSecondary } from '@/components/Client/UI/ButtonSecondary/ButtonSecondary';
 import { useRouter } from 'next/navigation';
 import { FunctionalModeProvider } from '@/providers/FunctionalMode';
-import { SearchByPhoneProvider } from '@/providers/SearchByPhone';
+import { SearchByPhoneOrFolderProvider } from '@/providers/SearchByPhoneOrFolder';
 import { ShowModalGlobalProvider, useShowModalGlobal } from '@/providers/ShowModal';
 import { CleanerProvider } from '@/providers/Cleaner';
 import { OrderCreateModeProvider } from '@/providers/OrderCreateMode';
@@ -72,9 +72,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <CleanerProvider>
               <OrderProvider>
                 <ShowModalGlobalProvider>
-                  < SearchByPhoneProvider>
+                  <SearchByPhoneOrFolderProvider>
                     <RootLayoutContent>{children}</RootLayoutContent>
-                  </ SearchByPhoneProvider>
+                  </SearchByPhoneOrFolderProvider>
                 </ShowModalGlobalProvider>
               </OrderProvider>
             </CleanerProvider>

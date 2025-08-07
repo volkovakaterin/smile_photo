@@ -33,7 +33,7 @@ const EditOrder = () => {
         handleSetFormatForAll, setLastFolder, lastFolder } = useOrder();
     const { order } = useOrderId(orderId);
     const { handleDeleteProduct, editOrder, applyFormatAllPhotos, handleDeletePhoto } = useEditOrder();
-    const [telNumber, setTelNumber] = useState('');
+    const [orderName, setOrderName] = useState('');
     const [selectPhoto, setSelectPhoto] = useState<string | null>(null);
     const [activeSlideTypeProduct, setActiveSlideTypeProduct] = useState<number | null>(null);
     const [activeSlide, setActiveSlide] = useState<number | null>(null);
@@ -44,7 +44,7 @@ const EditOrder = () => {
     const { showModalGlobal, setShowModalGlobal } = useShowModalGlobal();
 
     const confirmOrder = () => {
-        setTelNumber(order.tel_number)
+        setOrderName(order.tel_number || order.folder_name)
         setOrderId(null);
         setSuccess(true)
     }
@@ -169,8 +169,13 @@ const EditOrder = () => {
                 <NavigationBar basket={true} totalQuantity={quantityProducts} navigationBack={navigationBack}
                     btnExit={true} navigationExit={navigationExit} btnBack={true} />
                 {order && (<><span className={styles.breadcrumbs}>Заказы / {formattedDate(order.createdAt)} / {dateFn().time} / {order.tel_number}</span><div className={styles.EditOrder}>
-                    <h2 className={styles.title}>Заказ № {order.tel_number}</h2>
-                    <span className={styles.dateOrder}>{formattedDate(order.createdAt)} / {dateFn().time}</span>
+                    <h2 className={styles.title}>Заказ № {order.tel_number || order.folder_name}</h2>
+                    <div className={styles.infoWrapper}>
+                        <span className={styles.dateOrder}>{formattedDate(order.createdAt)} / {dateFn().time}</span>
+                        {order.number_photos_in_folders && (<span className={styles.nameOrder}>Всего фото в папке {order.number_photos_in_folders?.reduce(
+                            (sum, item) => sum + item.number_photos, 0)} </span>)}
+                    </div>
+
                     <div className={styles.wrapperProducts}>
                         {mode == 'with_formats' ? (basketProducts && (basketProducts.map((product, index) => (
                             <ProductBasket product={product}
@@ -193,7 +198,10 @@ const EditOrder = () => {
                     </div>
                 </div><div className={styles.wrapperBtn}>
                         <ButtonSecondary text='Добавить фото' width={444} onClick={() => addPhoto()} />
-                        <ButtonSecondary text='Подтвердить' width={444} onClick={() => confirmOrder()} />
+                        <div className={styles.wrapperConfirm}>
+                            <span style={{ width: '444px' }} className={styles.warning}>Внимание, перед нажатием кнопки &apos;Подтвердить заказ&apos; согласуйте формат печати с администратором</span>
+                            <ButtonSecondary text='Подтвердить' width={444} onClick={() => confirmOrder()} />
+                        </div>
                     </div></>)}
             </div>)}
             {showModal && createPortal(
@@ -224,7 +232,7 @@ const EditOrder = () => {
                 />,
                 document.body
             )}
-            {success && (<SuccessOrder title={'Супер! Ваш заказ отредактирован.'} tel_number={telNumber} />)}</>
+            {success && (<SuccessOrder title={'Супер! Ваш заказ отредактирован.'} order_name={orderName} />)}</>
     );
 };
 

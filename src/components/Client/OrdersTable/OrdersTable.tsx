@@ -127,21 +127,20 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
             <Table>
                 <TableHead>
                     <TableRow>
-                        <TableCell>Номер телефона/<br />
+                        <TableCell style={{ width: '150px' }}>Номер телефона/<br />
                             Имя папки</TableCell>
-                        <TableCell>Статус</TableCell>
-                        <TableCell>Кол-во фото</TableCell>
-                        <TableCell>Комментарий</TableCell>
-                        <TableCell>Создан</TableCell>
-                        <TableCell>Редактирован</TableCell>
-                        <TableCell>Детали</TableCell>
+                        <TableCell style={{ width: '160px' }}>Статус</TableCell>
+                        <TableCell style={{ width: '90px' }}>Кол-во фото</TableCell>
+                        <TableCell style={{ width: '300px' }}>Комментарий</TableCell>
+                        <TableCell >Создан</TableCell>
+                        <TableCell >Редактирован</TableCell>
+                        <TableCell >Детали</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {orders.map(order => {
                         const isExpanded = expandedComments.includes(order.id);
                         const raw = comments[order.id] || "";
-                        const short = raw.length > 10 ? raw.slice(0, 10) + "…" : raw;
                         let photosInFolder = 0;
                         {
                             if (order.number_photos_in_folders) {
@@ -165,8 +164,8 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
                                                     ? '#d9e0ed'
                                                     : undefined
                                 }}>
-                                    <TableCell>{order.tel_number}{order.folder_name}</TableCell>
-                                    <TableCell>
+                                    <TableCell style={{ width: '150px' }}>{order.tel_number}{order.folder_name}</TableCell>
+                                    <TableCell style={{ width: '160px' }}>
                                         <Select
                                             value={order.status}
                                             onChange={(e) => changeStatus(e.target.value, order)}
@@ -178,19 +177,20 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
                                             <MenuItem value="paid">Оплачен</MenuItem>
                                         </Select>
                                     </TableCell>
-                                    <TableCell> {photosInFolder !== 0
+                                    <TableCell style={{ width: '90px' }}> {photosInFolder !== 0
                                         ? `${photosInFolder}/${order.images.length}`
                                         : order.images.length
                                     }</TableCell>
 
                                     {/* === Ячейка «Комментарий» === */}
-                                    <TableCell>
+                                    <TableCell style={{ width: '300px' }}>
                                         {isExpanded ? (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
                                                 <TextField
                                                     multiline
                                                     autoFocus
                                                     fullWidth
+                                                    minRows={2}
                                                     variant="outlined"
                                                     size="small"
                                                     value={raw}
@@ -199,11 +199,12 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
                                                     sx={{
                                                         '& .MuiOutlinedInput-root': {
                                                             padding: 0,
+
                                                         },
                                                         '& .MuiOutlinedInput-input': {
                                                             fontSize: '0.875rem !important',
                                                             lineHeight: '1.43 !important',
-                                                            color: 'black'
+                                                            color: 'black',
                                                         },
                                                     }}
                                                 />
@@ -215,16 +216,25 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
                                             <Typography
                                                 variant="body2"
                                                 onClick={() => toggleComment(order.id)}
-                                                style={{ cursor: 'pointer', color: raw ? 'inherit' : '#999' }}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    color: raw ? 'inherit' : '#999',
+                                                    whiteSpace: 'pre-line',
+                                                    overflowWrap: 'break-word',
+                                                    wordBreak: 'break-word',
+                                                    width: '300px',
+                                                    maxWidth: '300px',
+                                                    display: 'block',
+                                                }}
                                             >
-                                                {raw ? short : "Добавить…"}
+                                                {raw || "Добавить…"}
                                             </Typography>
                                         )}
                                     </TableCell>
 
                                     <TableCell>{new Date(order.createdAt).toLocaleString()}</TableCell>
-                                    <TableCell>{new Date(order.updatedAt).toLocaleString()}</TableCell>
-                                    <TableCell>
+                                    <TableCell >{new Date(order.updatedAt).toLocaleString()}</TableCell>
+                                    <TableCell >
                                         <IconButton onClick={() => toggleRow(order.id)}>
                                             {expandedRows.includes(order.id) ? <ExpandLess /> : <ExpandMore />}
                                         </IconButton>

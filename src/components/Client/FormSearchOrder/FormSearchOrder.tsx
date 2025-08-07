@@ -5,17 +5,21 @@ import { useForm, Controller } from 'react-hook-form';
 import { InputPhone, TYPE_INPUT } from '@/components/Client/UI/InputPhone/InputPhone';
 import styles from './FormSearchOrder.module.scss';
 import { KeyboardNumbers } from '@/components/KeyboardNumbers/KeyboardNumbers';
+import { useOrderCreateMode } from '@/providers/OrderCreateMode';
+import Loupe from '@/assets/icons/loupe.svg';
+import Image from 'next/image';
 
-type FormData = {
+export type FormData = {
     phone: string;
+    nameFolder: string;
 };
 
 type FormSearchOrderProps = {
-    onSearchByPhone: (phone: string) => void;
-    searhByPhone: string;
-}
+    onSearch: (orderName: { phone?: string; nameFolder?: string; }) => void;
+    orderName: { phone?: string; nameFolder?: string } | null;
+};
 
-const FormSearchOrder = ({ onSearchByPhone, searhByPhone }: FormSearchOrderProps) => {
+const FormSearchOrder = ({ onSearch, orderName }: FormSearchOrderProps) => {
     const {
         handleSubmit,
         control,
@@ -24,64 +28,106 @@ const FormSearchOrder = ({ onSearchByPhone, searhByPhone }: FormSearchOrderProps
         watch,
         setValue,
     } = useForm<FormData>({
-        defaultValues: { phone: '' },
+        defaultValues: {
+            phone: '',
+            nameFolder: '',
+        },
     });
 
-    const [phoneExistsError, setPhoneExistsError] = React.useState<string | null>(null);
-    const [showKeyboard, setShowKeyboard] = React.useState(searhByPhone ? false : true);
+    const { orderCreateMode } = useOrderCreateMode();
+
+    const [orderNameExistsError, setOrderNameExistsError] = React.useState<string | null>(null);
+    const [showKeyboard, setShowKeyboard] = React.useState(orderName ? false : true);
 
     const handleKeyboardPress = (key: string) => {
-        const currentValue = watch('phone') || '+7';
+        const fieldName = orderCreateMode === 'create_order_number' ? 'phone' : 'nameFolder';
+        const currentValue = watch(fieldName) || (fieldName === 'phone' ? '+7' : '');
+
         if (key === '+') return;
+
         if (key === 'delete') {
-            setValue('phone', currentValue.slice(0, -1));
+            setValue(fieldName, currentValue.slice(0, -1));
         } else {
-            setValue('phone', currentValue + key);
+            setValue(fieldName, currentValue + key);
         }
     };
 
     useEffect(() => {
-        if (searhByPhone) {
-            setValue('phone', searhByPhone);
+        if (orderName) {
+            if (orderCreateMode === 'create_order_number') {
+                setValue('phone', orderName.phone || '');
+            } else {
+                setValue('nameFolder', orderName.nameFolder || '');
+            }
         }
-    }, [searhByPhone, setValue]);
+    }, [orderName, setValue, orderCreateMode]);
 
     const onSubmit = (data: FormData) => {
         setShowKeyboard(false);
-        onSearchByPhone(data.phone.trim().replace(/\s+/g, ''));
+
+        if (orderCreateMode === 'create_order_number') {
+            const phone = data.phone?.trim().replace(/\s+/g, '');
+            if (phone) onSearch({ phone: phone });
+        } else {
+            const name = data.nameFolder?.trim();
+            if (name) onSearch({ nameFolder: name });
+        }
     };
 
     return (
         <div>
             <form onSubmit={handleSubmit(onSubmit)} className={styles.FormSearchOrder}>
-                <Controller
-                    name="phone"
-                    control={control}
-                    rules={{
-                        required: 'Введите номер телефона',
-                        // validate: (value) =>
-                        //     value.startsWith('+7') || 'Номер должен начинаться с +7',
-                    }}
-                    render={({ field, fieldState }) => (
-                        <InputPhone
-                            onFocus={() => setShowKeyboard(true)}
-                            onSearch={() => onSubmit(getValues())}
-                            field={field}
-                            fieldState={fieldState}
-                            errors={errors}
-                            setPhoneExistsError={setPhoneExistsError}
-                            phoneExistsError={phoneExistsError} type={TYPE_INPUT.SEARCH}
-                            width={444} />
-                    )}
-                />
+                {orderCreateMode === 'create_order_number' ? (
+                    <Controller
+                        name="phone"
+                        control={control}
+                        rules={{ required: 'Введите номер телефона' }}
+                        render={({ field, fieldState }) => (
+                            <InputPhone
+                                onFocus={() => setShowKeyboard(true)}
+                                onSearch={() => onSubmit(getValues())}
+                                field={field}
+                                fieldState={fieldState}
+                                errors={errors}
+                                setPhoneExistsError={setOrderNameExistsError}
+                                phoneExistsError={orderNameExistsError}
+                                type={TYPE_INPUT.SEARCH}
+                                width={444}
+                            />
+                        )}
+                    />
+                ) : (
+                    <Controller
+                        name="nameFolder"
+                        control={control}
+                        rules={{ required: 'Введите номер заказа' }}
+                        render={({ field, fieldState }) => (
+                            <div className={styles.InputWrapper}>
+                                <div className={styles.telWrapper} style={{ width: `444px` }}>
+                                    <input
+                                        type="number"
+                                        className={styles.Input}
+                                        {...field}
+                                        onFocus={() => setShowKeyboard(true)}
+                                    />
+                                    <div className={styles.wrapperArrow} onClick={() => onSubmit(getValues())}>
+                                        <Image src={Loupe} alt={'arrow'}
+                                            width={22} height={20} />
+                                    </div>
+                                </div>
+
+                            </div>
+                        )}
+                    />
+                )}
             </form>
+
             <div className={styles.keyboardWrapper}>
                 <div className={`${styles.keyboard} ${showKeyboard ? styles.show : ''}`}>
                     <KeyboardNumbers onKeyPress={handleKeyboardPress} />
                 </div>
             </div>
         </div>
-
     );
 };
 

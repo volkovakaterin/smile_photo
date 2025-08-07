@@ -2,6 +2,7 @@ import { Endpoint } from "payload";
 import fs from 'fs';
 import path from 'path';
 import payload from 'payload';
+import { sortPhotoNamesByPrefixAndNumber } from "@/services/sortPhotoNamesByPrefixAndNumber";
 
 const getPhotos: Endpoint = {
     path: '/check-images',
@@ -29,31 +30,27 @@ const getPhotos: Endpoint = {
                 )
                 .map((file) => {
                     const fullPath = path.join(folderFullPath, file);
-                    const stats = fs.statSync(fullPath);
-                    return {
-                        file,
-                        mtime: stats.mtime
-                    };
+                    return file;
                 });
 
-            images.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
+            const sortedImages = sortPhotoNamesByPrefixAndNumber(images);
 
             let paginatedImages: string[];
             let hasNextPage = false; // по умолчанию нет следующей страницы
 
-            const sortedImages = images.map(image => path.join(folderPath, image.file));
+            const imagesPaths = sortedImages.map(image => path.join(folderPath, image));
 
             if (limit !== undefined) {
                 // Когда limit есть — делаем срез
                 const offNum = Number(offset);
                 const limNum = Number(limit);
 
-                paginatedImages = sortedImages.slice(offNum, offNum + limNum);
+                paginatedImages = imagesPaths.slice(offNum, offNum + limNum);
                 // hasNextPage = true, если обрезали не до конца
-                hasNextPage = offNum + limNum < sortedImages.length;
+                hasNextPage = offNum + limNum < imagesPaths.length;
             } else {
                 // Когда limit не пришёл — отдаём всё
-                paginatedImages = sortedImages;
+                paginatedImages = imagesPaths;
                 hasNextPage = false;
             }
 
