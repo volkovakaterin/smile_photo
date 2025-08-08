@@ -33,7 +33,7 @@ const getPhotos: Endpoint = {
                     return file;
                 });
 
-            const sortedImages = sortPhotoNamesByPrefixAndNumber(images);
+             const sortedImages = images;
 
             let paginatedImages: string[];
             let hasNextPage = false; // по умолчанию нет следующей страницы
