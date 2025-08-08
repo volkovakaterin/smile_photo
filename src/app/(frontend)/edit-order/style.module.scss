@@ -7,7 +7,7 @@
 
 .EditOrder {
   overflow: hidden;
-  height: calc(100vh - 215px);
+  height: calc(100vh - 165px);
   .title {
     margin-top: 30px;
     text-align: center;
@@ -42,11 +42,15 @@
 }
 
 .wrapperBtn {
+  position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 30px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 20px;
-  margin-top: 20px;
+  // margin-top: 20px;
 }
 
 .wrapperConfirm {
