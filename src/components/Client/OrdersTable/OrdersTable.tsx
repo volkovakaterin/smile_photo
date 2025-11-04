@@ -51,7 +51,7 @@ type OrdersTableProps = {
     ordersTotal: number;
 };
 
-const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
+const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
     const { handleChangeStatusOrder } = useStatusChangeOrder();
     const { mutate: deleteOrder } = useDeleteOrder();
@@ -277,6 +277,7 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
                                                                             <Typography>
                                                                                 <strong>Фото:</strong>
                                                                                 <Image
+                                                                                    unoptimized={true}
                                                                                     quality={30}
                                                                                     src={`/api/dynamic-thumbnail?img=${image.image}`}
                                                                                     alt={'photo'} width={212}
@@ -505,6 +506,6 @@ const OrdersTable: React.FC<OrdersTableProps> = memo(({ orders }) => {
         </TableContainer>
     );
 
-});
+};
 
 export default OrdersTable;
