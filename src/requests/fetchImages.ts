@@ -6,7 +6,6 @@ export async function fetchImages({ pageParam = 0, folderPath, limit, directory 
     limit?: number;
     directory: string;
 }) {
-    // const photosDirectory = directories.photos;
     const params: Record<string, any> = {
         folderPath,
         photosDirectory: directory,

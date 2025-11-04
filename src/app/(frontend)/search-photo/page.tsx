@@ -48,43 +48,65 @@ const SearchPhoto = () => {
     const galleryRef = useRef<PhotoGalleryHandle>(null);
     const router = useRouter();
 
-    const fetchFolders = async (currentPath) => {
+    const fetchFolders = async (currentPath: string, opts?: { bust?: boolean }) => {
         const limit = 1000000;
+        const bust = opts?.bust === true;
         setIsLoadingFolder(true);
+
         try {
-            const query = {
-                path: {
-                    equals: currentPath,
-                },
-            }
+            const query = { path: { equals: currentPath } };
             const stringifiedQuery = stringify(
-                {
-                    where: query,
-                    limit,
-                },
-                { addQueryPrefix: true },
-            )
-            const response = await axios.get(`/api/folders${stringifiedQuery}`
+                { where: query, limit },
+                { addQueryPrefix: true }
             );
 
-            const docs = response.data.docs;
-            setFolders(sortFoldersByName(docs));
-            setIsLoadingFolder(false);
+            if (bust) {
+                // РЕЖИМ РЕФРЕША: пробиваем кэш
+                const url = `/api/folders${stringifiedQuery}${stringifiedQuery ? '&' : '?'
+                    }_v=${Date.now()}`;
+
+                const res = await fetch(url, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate',
+                        Pragma: 'no-cache',
+                        'If-None-Match': '',
+                        'If-Modified-Since': '0',
+                    },
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                setFolders(sortFoldersByName(data.docs));
+            } else {
+                // ОБЫЧНЫЙ РЕЖИМ: кэш работает как обычно
+                const url = `/api/folders${stringifiedQuery}`;
+                const response = await axios.get(url); // без спец. заголовков
+                setFolders(sortFoldersByName(response.data.docs));
+            }
         } catch (error) {
             console.error('Ошибка загрузки папок:', error);
+        } finally {
             setIsLoadingFolder(false);
         }
     };
+
 
     const handleCountChange = (count: number) => {
         setPhotoInFolder(count)
     };
 
-    // 2) Обработчик кнопки «Select All»
+    // Обработчик кнопки «Select All»
     const handleSelectAllClick = () => {
         if (galleryRef.current) {
             galleryRef.current.addAllPhotos();
         }
+    };
+
+    // обновление галереи картинок по кнопке «Обновить»
+    const handleRefreshClick = () => {
+        galleryRef.current?.hardResetImages();
     };
 
     useEffect(() => {
@@ -152,7 +174,8 @@ const SearchPhoto = () => {
             <NavigationBar basket={!!orderId} totalQuantity={quantityProducts} navigationBack={navigationBack}
                 btnSelectAll={(mode !== 'with_formats' && hasImages) ? true : false}
                 handleClick={(mode !== 'with_formats' && hasImages) ? handleSelectAllClick : undefined} btnExit={true}
-                navigationExit={navigationExit} btnBack={breadcrumbs.length > 1 ? true : false} />
+                navigationExit={navigationExit} btnBack={breadcrumbs.length > 1 ? true : false}
+                onRefresh={hasImages ? handleRefreshClick : () => { fetchFolders(currentPath, { bust: true }) }} btnRefresh={true} />
             <div className={styles.SearchPhoto}>
                 <div className={styles.infoWrapper}>
                     <Breadcrumbs breadcrumbs={breadcrumbs} onClick={handleBreadcrumbClick} />

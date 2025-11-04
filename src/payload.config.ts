@@ -29,6 +29,7 @@ import processCleanerEndpoint from './endpoints/processCleaner'
 import Formats from './collections/Formats'
 import { PeriodMonitoring } from './PeriodMonitoring'
 import { OrderCreationMode } from './OrderCreationMode'
+import { FoldersVersion } from './FoldersVersion'
 
 
 
@@ -81,7 +82,7 @@ export default buildConfig({
   cors: ['http://localhost:3000', 'http://network:3000'],
   csrf: ['http://localhost:3000', 'http://network:3000'],
   endpoints: [getPhotos, createArchive, monitorFolders, dynamicThumbnail, processCleanerEndpoint],
-  globals: [Header, Footer, FunctionalMode, PeriodCleaner, PeriodMonitoring, OrderCreationMode],
+  globals: [Header, Footer, FunctionalMode, PeriodCleaner, PeriodMonitoring, OrderCreationMode, FoldersVersion],
   plugins: [
     ...plugins,
     // storage-adapter-placeholder

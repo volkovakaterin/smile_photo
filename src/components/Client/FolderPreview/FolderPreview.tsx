@@ -46,8 +46,6 @@ export function FolderPreview({ name, onClick, hasImage, path, directory }: Fold
                 {hasImage && thumbnails.length > 0 &&
                     (<div className={styles.thumbs}>
                         {thumbnails.map((src, i) => (
-                            // <div key={i} className={`${styles.thumb} ${styles[`thumb-${i}`]}`}></div>
-
                             <Image key={i} src={`/api/dynamic-thumbnail?img=${normalizePath(src)}`} alt={''} fill className={`${styles.thumb} ${styles[`thumb-${i}`]}`}></Image>
                         ))}
                     </div>)}

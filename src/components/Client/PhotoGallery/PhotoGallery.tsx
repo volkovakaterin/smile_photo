@@ -26,6 +26,7 @@ import { useOrderCreateMode } from '@/providers/OrderCreateMode';
 
 export interface PhotoGalleryHandle {
     addAllPhotos: () => void;
+    hardResetImages: () => Promise<void>;
 }
 
 interface PhotoGalleryProps {
@@ -85,8 +86,10 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
+        refetch,
+
     } = useInfiniteQuery({
-        queryKey: ['images'],
+        queryKey: ['images', folderPath],
         queryFn: ({ pageParam = 0 }) => fetchImages({ pageParam, folderPath, limit: undefined }),
         getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextOffset : undefined,
         initialPageParam: 0,
@@ -294,9 +297,13 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
         setAddAllPhotoAction(false);
     };
 
-    // 2) Экспортируем её наружу через useImperativeHandle
     useImperativeHandle(ref, () => ({
         addAllPhotos: handleAddAllPhotos,
+        // жёсткий ресет: очистит кэш этой папки и стянет заново (полезно при смене источника)
+        hardResetImages: async () => {
+            await queryClient.removeQueries({ queryKey: ['images', folderPath], exact: true });
+            await refetch();
+        },
     }));
 
     return (

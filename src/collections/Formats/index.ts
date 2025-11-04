@@ -21,6 +21,7 @@ const Formats: CollectionConfig = {
         read: () => true,
         create: () => true,
         update: () => true,
+        delete: () => true,
     },
     timestamps: true,
 };

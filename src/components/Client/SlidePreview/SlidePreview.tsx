@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useEffect, useRef } from 'react';
+import { memo, useRef } from 'react';
 import styles from './SlidePreview.module.scss';
 import path from 'path';
 import Image from 'next/image';
@@ -20,6 +20,7 @@ export const SlidePreview = memo(({ image,
         <div className={styles.SlidePreview}>
             <div key={image} className={styles.sliderItem}>
                 {image ? <Image
+                    unoptimized={true}
                     fill
                     className={styles.image}
                     style={{ height: '100%', objectFit: 'contain' }}

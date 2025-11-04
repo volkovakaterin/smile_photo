@@ -1,53 +1,84 @@
-import React from 'react';
-import styled from 'styled-components';
+// 'use client';
 
-const Loader = () => {
-    return (
-        <StyledWrapper>
-            <svg viewBox="25 25 50 50">
-                <circle r={20} cy={50} cx={50} />
-            </svg>
-        </StyledWrapper>
-    );
-}
+// import React, { createContext, useCallback, useContext, useMemo, useRef, useState, useEffect } from 'react';
+// import { createPortal } from 'react-dom';
 
-const StyledWrapper = styled.div`
-  svg {
-   width: 3.25em;
-   transform-origin: center;
-   animation: rotate4 2s linear infinite;
-  }
+// type Ctx = {
+//     startTask: () => () => void;     // вызывает -> возвращает end()
+//     setLoading: (v: boolean) => void; // императивно
+//     isLoading: boolean;
+// };
 
-  circle {
-   fill: none;
-   stroke: hsl(214, 97%, 59%);
-   stroke-width: 2;
-   stroke-dasharray: 1, 200;
-   stroke-dashoffset: 0;
-   stroke-linecap: round;
-   animation: dash4 1.5s ease-in-out infinite;
-  }
+// const LoadingCtx = createContext<Ctx | null>(null);
 
-  @keyframes rotate4 {
-   100% {
-    transform: rotate(360deg);
-   }
-  }
+// export const useLoadingOverlay = () => {
+//     const ctx = useContext(LoadingCtx);
+//     if (!ctx) throw new Error('useLoadingOverlay must be used within LoadingOverlayProvider');
+//     return ctx;
+// };
 
-  @keyframes dash4 {
-   0% {
-    stroke-dasharray: 1, 200;
-    stroke-dashoffset: 0;
-   }
+// const LoadingOverlay = ({ show }: { show: boolean }) => {
+//     if (!show) return null;
+//     return createPortal(
+//         <div
+//             style={{
+//                 position: 'fixed', inset: 0, zIndex: 9999,
+//                 background: 'rgba(0,0,0,0.25)',
+//                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+//                 backdropFilter: 'blur(1px)'
+//             }}
+//             aria-busy="true"
+//             aria-live="polite"
+//         >
+//             <div
+//                 role="status"
+//                 style={{
+//                     width: 56, height: 56, borderRadius: '50%',
+//                     border: '6px solid rgba(255,255,255,0.35)',
+//                     borderTopColor: '#fff',
+//                     animation: 'spin 0.8s linear infinite'
+//                 }}
+//             />
+//             <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+//         </div>,
+//         document.body
+//     );
+// };
 
-   50% {
-    stroke-dasharray: 90, 200;
-    stroke-dashoffset: -35px;
-   }
+// export const LoadingOverlayProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+//     const counterRef = useRef(0);
+//     const [isLoading, setIsLoading] = useState(false);
 
-   100% {
-    stroke-dashoffset: -125px;
-   }
-  }`;
+//     // переключаем класс на body для курсора
+//     useEffect(() => {
+//         if (typeof document === 'undefined') return;
+//         const cls = 'busy-cursor';
+//         if (isLoading) document.body.classList.add(cls);
+//         else document.body.classList.remove(cls);
+//         return () => document.body.classList.remove(cls);
+//     }, [isLoading]);
 
-export default Loader;
+//     const setLoading = useCallback((v: boolean) => {
+//         counterRef.current = Math.max(0, v ? counterRef.current + 1 : counterRef.current - 1);
+//         setIsLoading(counterRef.current > 0);
+//     }, []);
+
+//     const startTask = useCallback(() => {
+//         setLoading(true);
+//         let done = false;
+//         return () => {
+//             if (done) return;
+//             done = true;
+//             setLoading(false);
+//         };
+//     }, [setLoading]);
+
+//     const value = useMemo(() => ({ startTask, setLoading, isLoading }), [startTask, setLoading, isLoading]);
+
+//     return (
+//         <LoadingCtx.Provider value={value}>
+//             {children}
+//             <LoadingOverlay show={isLoading} />
+//         </LoadingCtx.Provider>
+//     );
+// };

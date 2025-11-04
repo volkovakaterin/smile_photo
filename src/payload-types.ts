@@ -59,6 +59,7 @@ export interface Config {
     'period-cleaner': PeriodCleaner;
     'period-monitoring': PeriodMonitoring;
     'order-creation-mode': OrderCreationMode;
+    'folders-version': FoldersVersion;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -67,6 +68,7 @@ export interface Config {
     'period-cleaner': PeriodCleanerSelect<false> | PeriodCleanerSelect<true>;
     'period-monitoring': PeriodMonitoringSelect<false> | PeriodMonitoringSelect<true>;
     'order-creation-mode': OrderCreationModeSelect<false> | OrderCreationModeSelect<true>;
+    'folders-version': FoldersVersionSelect<false> | FoldersVersionSelect<true>;
   };
   locale: null;
   user: User & {
@@ -1547,6 +1549,16 @@ export interface OrderCreationMode {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "folders-version".
+ */
+export interface FoldersVersion {
+  id: string;
+  foldersVersion: number;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -1627,6 +1639,16 @@ export interface PeriodMonitoringSelect<T extends boolean = true> {
  */
 export interface OrderCreationModeSelect<T extends boolean = true> {
   mode?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "folders-version_select".
+ */
+export interface FoldersVersionSelect<T extends boolean = true> {
+  foldersVersion?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

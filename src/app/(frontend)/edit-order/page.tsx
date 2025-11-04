@@ -18,7 +18,7 @@ import { totalQuantityFn } from '@/services/totalQuantity';
 import { FormTypeProduct } from '@/components/Client/FormTypeProduct/FormTypeProduct';
 import { PreviewPhoto } from '@/components/Client/PreviewPhoto/PreviewPhoto';
 import { SliderPhotoProductType } from '@/components/Client/SliderPhotoProductType/SliderPhotoProductType';
-import { useProducts } from '@/hooks/Products/useGetProducts';
+// import { useProducts } from '@/hooks/Products/useGetProducts';
 import { useFunctionalMode } from '@/providers/FunctionalMode';
 import { useShowModalGlobal } from '@/providers/ShowModal';
 import { parseFoldersFromPath } from '@/services/parseFoldersFromPath';
@@ -39,7 +39,7 @@ const EditOrder = () => {
     const [activeSlide, setActiveSlide] = useState<number | null>(null);
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [currentImageProducts, setCurrentImageProducts] = useState(null);
-    const { products } = useProducts();
+    // const { products } = useProducts();
     const { mode } = useFunctionalMode();
     const { showModalGlobal, setShowModalGlobal } = useShowModalGlobal();
 
@@ -214,11 +214,11 @@ const EditOrder = () => {
                                 selectPhotos={order?.images ?? []}
                                 dir={directories.photos} />
                         </div>}
-                    <FormTypeProduct onClose={closeTypeProduct}
+                    {/* <FormTypeProduct onClose={closeTypeProduct}
                         confirmFn={addPhotoOrder} error={false} products={products.docs}
                         selectProducts={currentImageProducts} selectPhoto={selectPhoto}
                         selectFormatForAll={selectFormatForAll} formatForAll={formatForAll}
-                    />
+                    /> */}
                 </TheModal>,
                 document.body)}
             {showPreviewModal && createPortal(

@@ -1,8 +1,6 @@
 import { Endpoint } from "payload";
 import fs from 'fs';
 import path from 'path';
-import payload from 'payload';
-import { sortPhotoNamesByPrefixAndNumber } from "@/services/sortPhotoNamesByPrefixAndNumber";
 
 const getPhotos: Endpoint = {
     path: '/check-images',
@@ -33,7 +31,7 @@ const getPhotos: Endpoint = {
                     return file;
                 });
 
-             const sortedImages = images;
+            const sortedImages = images;
 
             let paginatedImages: string[];
             let hasNextPage = false; // по умолчанию нет следующей страницы
@@ -80,4 +78,3 @@ const getPhotos: Endpoint = {
 };
 
 export default getPhotos;
-

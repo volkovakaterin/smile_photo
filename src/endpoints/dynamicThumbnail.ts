@@ -45,6 +45,12 @@ const dynamicThumbnail: Endpoint = {
             return new Response(buffer, {
                 headers: {
                     'Content-Type': 'image/jpeg',
+                    // Полное отключение клиентского и CDN-кэша
+                    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                    'Pragma': 'no-cache',
+                    'Expires': '0',
+                    // (опционально для CDN вроде Vercel/Cloudflare)
+                    'Surrogate-Control': 'no-store',
                 },
                 status: 200,
             });
@@ -56,3 +62,6 @@ const dynamicThumbnail: Endpoint = {
 };
 
 export default dynamicThumbnail;
+
+
+
