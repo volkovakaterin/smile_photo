@@ -82,7 +82,7 @@ const SearchPhoto = () => {
             } else {
                 // ОБЫЧНЫЙ РЕЖИМ: кэш работает как обычно
                 const url = `/api/folders${stringifiedQuery}`;
-                const response = await axios.get(url); // без спец. заголовков
+                const response = await axios.get(url);
                 setFolders(sortFoldersByName(response.data.docs));
             }
         } catch (error) {

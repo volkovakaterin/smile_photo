@@ -14,8 +14,6 @@ import { createPortal } from 'react-dom';
 import { TheModal } from '@/components/Client/TheModal/TheModal';
 import { useStatusChangeOrder } from '@/hooks/Order/useChangeStatusOrder';
 import { SliderPhotoProductType } from '@/components/Client/SliderPhotoProductType/SliderPhotoProductType';
-import { FormTypeProduct } from '@/components/Client/FormTypeProduct/FormTypeProduct';
-// import { useProducts } from '@/hooks/Products/useGetProducts';
 import { PreviewPhoto } from '@/components/Client/PreviewPhoto/PreviewPhoto';
 import { useFunctionalMode } from '@/providers/FunctionalMode';
 import { useRouter } from 'next/navigation';
@@ -39,7 +37,6 @@ const Basket = () => {
     const [activeSlide, setActiveSlide] = useState<number | null>(null);
     const [selectPhoto, setSelectPhoto] = useState<string | null>(null);
     const [currentImageProducts, setCurrentImageProducts] = useState(null);
-    //const { products } =  useProducts();
     const { mode } = useFunctionalMode();
     const { showModalGlobal, setShowModalGlobal } = useShowModalGlobal();
     const router = useRouter();

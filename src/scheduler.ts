@@ -1,5 +1,3 @@
-// scheduler.ts
-
 import cron, { ScheduledTask } from 'node-cron';
 import { getPeriodMonitoring } from './requests/getPeriodMonitoring';
 import processFoldersCron from './services/processFoldersCron';

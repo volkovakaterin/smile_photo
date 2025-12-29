@@ -26,6 +26,29 @@ const getPhotos: Endpoint = {
                 .filter((file) =>
                     ['.jpg', '.jpeg'].includes(path.extname(file).toLowerCase())
                 )
+                .sort((a, b) => {
+                    const A = path.parse(a).name;
+                    const B = path.parse(b).name;
+
+                    const ma = A.match(/^([A-Za-z]+)[_-](\d+)/);
+                    const mb = B.match(/^([A-Za-z]+)[_-](\d+)/);
+
+                    // если формат не совпал — fallback на обычную сортировку
+                    if (!ma || !mb) return A.localeCompare(B, undefined, { numeric: true, sensitivity: 'base' });
+
+                    const prefixA = ma[1].toUpperCase();
+                    const prefixB = mb[1].toUpperCase();
+
+                    if (prefixA !== prefixB) return prefixA.localeCompare(prefixB);
+
+                    const numA = parseInt(ma[2], 10);
+                    const numB = parseInt(mb[2], 10);
+
+                    if (numA !== numB) return numA - numB;
+
+                    // если числа равны (редко), сравним полное имя, чтобы было стабильно
+                    return A.localeCompare(B, undefined, { numeric: true, sensitivity: 'base' });
+                })
                 .map((file) => {
                     const fullPath = path.join(folderFullPath, file);
                     return file;

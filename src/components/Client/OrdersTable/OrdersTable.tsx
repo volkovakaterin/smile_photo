@@ -279,7 +279,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                                                                 <Image
                                                                                     unoptimized={true}
                                                                                     quality={30}
-                                                                                    src={`/api/dynamic-thumbnail?img=${image.image}`}
+                                                                                    src={`/api/dynamic-thumbnail?img=${image.image}&width=300&height=300`}
                                                                                     alt={'photo'} width={212}
                                                                                     height={114}
                                                                                     className={styles.image} />

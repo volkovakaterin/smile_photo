@@ -28,8 +28,8 @@ const dynamicThumbnail: Endpoint = {
         if (!fs.existsSync(imagePath)) {
             return new Response(JSON.stringify({ error: 'Изображение не найдено' }), { status: 404 });
         }
-        const thumbnailWidth = width ? parseInt(width, 10) : 300;
-        const thumbnailHeight = height ? parseInt(height, 10) : 300;
+        const thumbnailWidth = width ? parseInt(width, 10) : 200;
+        const thumbnailHeight = height ? parseInt(height, 10) : 200;
 
         try {
             // Генерируем миниатюру как буфер

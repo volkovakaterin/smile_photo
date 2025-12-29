@@ -43,14 +43,13 @@
 
 .wrapperBtn {
   position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 30px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 20px;
-  // margin-top: 20px;
 }
 
 .wrapperConfirm {

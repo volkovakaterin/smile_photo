@@ -12,7 +12,6 @@ interface SlideTypeProductProps {
 }
 
 const normalizePath = (p) => p.replace(/\\/g, '/');
-const ensureLeadingSlash = (p: string) => (p.startsWith('/') ? p : `/${p}`);
 
 export const SlideTypeProduct = memo(({ index, image, dir }: SlideTypeProductProps) => {
     return (
