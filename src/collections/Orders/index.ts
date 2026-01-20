@@ -74,6 +74,17 @@ const Orders: CollectionConfig = {
                     label: 'Изображение',
                 },
                 {
+                    name: 'mtimeMs',
+                    type: 'number',
+                    required: false,
+                    label: 'Версия файла (mtimeMs)',
+                    admin: {
+                        readOnly: true,
+                        description:
+                            'Метка времени изменения файла (ms). Используется для обновления миниатюр при перезаписи фото.',
+                    },
+                },
+                {
                     name: 'addedAt',
                     type: 'date',
                     required: true,

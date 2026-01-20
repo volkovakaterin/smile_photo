@@ -81,15 +81,16 @@ const createArchive: Endpoint = {
 
                         // 3) Для каждого printed — отдельная папка по size.name
                         const printedItems = related.filter(p => p.format === 'printed');
-                       const seenSizes = new Set<string>();
+                        const seenSizes = new Set<string>();
                         for (const prod of printedItems) {
                             if (prod.size) {
-                             const sizeName = prod.size.name.replace(/[/\\:*?"<>|]/g, '_');
+                                const sizeName = (prod.size.name || prod.name || '').replace(/[/\\:*?"<>|]/g, '_');
 
-                               if (seenSizes.has(sizeName)) continue;
-                                  seenSizes.add(sizeName);
-                               
-                                  const imagePath = decodeURIComponent(imageGroup.image);
+
+                                if (seenSizes.has(sizeName)) continue;
+                                seenSizes.add(sizeName);
+
+                                const imagePath = decodeURIComponent(imageGroup.image);
 
                                 if (!fs.existsSync(imagePath)) continue;
                                 const fileName = path.basename(imagePath);

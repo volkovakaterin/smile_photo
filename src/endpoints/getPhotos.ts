@@ -75,21 +75,29 @@ const getPhotos: Endpoint = {
                 hasNextPage = false;
             }
 
-            // Преобразуем каждый путь в абсолютный, добавляя photosDirectory
-            const paginatedImagesNormPath = paginatedImages.map((img) => {
-                return `${photosDirectory}/${decodeURIComponent(img)}`;
+            const paginatedImagesItems = paginatedImages.map((imgRel) => {
+                // imgRel вида "folder/subfolder/file.jpg"
+                const absPath = path.join(photosDirectory, imgRel);
+                const st = fs.statSync(absPath);
+
+                return {
+                    path: absPath.replace(/\\/g, '/'),
+                    mtimeMs: Math.trunc(st.mtimeMs),
+                };
             });
 
-            if (paginatedImages.length > 0) {
+            if (paginatedImagesItems.length > 0) {
                 return Response.json(
                     {
                         hasImages: true,
-                        images: paginatedImagesNormPath,
+                        images: paginatedImagesItems,
                         hasNextPage,
                     },
                     { status: 200 }
                 );
-            } else {
+            }
+
+            else {
                 // Пустой результат (если в этом диапазоне нет картинок)
                 return Response.json({ hasImages: false }, { status: 200 });
             }

@@ -20,6 +20,16 @@ const Folders: CollectionConfig = {
             },
         },
         {
+            name: 'fullPath',
+            type: 'text',
+            label: 'Полный путь',
+            required: true,
+            unique: true,
+            admin: {
+                readOnly: true
+            }
+        },
+        {
             name: 'path',
             type: 'text',
             label: 'Локальный путь',

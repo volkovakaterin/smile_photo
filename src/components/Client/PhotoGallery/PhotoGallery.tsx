@@ -33,8 +33,8 @@ interface PhotoGalleryProps {
     folderPath: string;
     onImagesCountChange?: (count: number) => void;
 }
-
-const normalizePath = (p) => p.replace(/\\/g, '/');
+const normalizePath = (p: unknown) =>
+    (typeof p === 'string' ? p : '').replace(/\\/g, '/');
 
 export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProps>(({ folderPath, onImagesCountChange }, ref) => {
     const [activeSlide, setActiveSlide] = useState<number | null>(null);
@@ -58,6 +58,7 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
     const { mode } = useFunctionalMode();
     const { orderCreateMode } = useOrderCreateMode();
     const [addAllPhotoAction, setAddAllPhotoAction] = useState(false);
+    const [thumbVersion, setThumbVersion] = useState<number>(0);
 
     async function fetchImages({ pageParam = 0, folderPath, limit }: {
         pageParam?: number;
@@ -96,6 +97,15 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
     });
 
     const allImages = data ? data.pages.flatMap((page) => page.rows) : [];
+    type ImageMeta = { image: string; mtimeMs?: number };
+
+    const getImageMeta = (imgPath: string | null): ImageMeta | null => {
+        if (!imgPath) return null;
+        const normalized = normalizePath(imgPath);
+        const found = allImages.find((x: any) => normalizePath(x?.path) === normalized);
+        return { image: normalized, mtimeMs: found?.mtimeMs };
+    };
+
     const parentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -186,10 +196,26 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
                 } else {
                     if (addAllParam) {
                         const result = await fetchImages({ pageParam: 0, folderPath })
-                        handleAddAllPhotoOrder(data.doc.id, result.rows, data.doc, { folderName: folderPath, photoNumber: allImages.length })
+                        const imagesMeta = (result.rows ?? [])
+                            .map((img: any) => ({ image: normalizePath(img?.path), mtimeMs: img?.mtimeMs }))
+                            .filter((x: any) => x.image);
+
+                        handleAddAllPhotoOrder(
+                            data.doc.id,
+                            imagesMeta,
+                            data.doc,
+                            { folderName: folderPath, photoNumber: allImages.length }
+                        );
+
                     } else {
-                        handleAddPhotoOrder(data.doc.id, photoParam, undefined,
-                            { folderName: folderPath, photoNumber: allImages.length });
+                        const meta = getImageMeta(photoParam);
+                        handleAddPhotoOrder(
+                            data.doc.id,
+                            meta ?? (photoParam as any), // на всякий случай, но meta почти всегда будет
+                            undefined,
+                            { folderName: folderPath, photoNumber: allImages.length }
+                        );
+
                     }
                 }
                 queryClient.invalidateQueries({ queryKey: ['add order'] });
@@ -236,7 +262,14 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
                     setActiveSlideTypeProduct(index);
                     setShowTypeProduct(true);
                 } else {
-                    handleAddPhotoOrder(orderId, el, order, { folderName: folderPath, photoNumber: allImages.length })
+                    const meta = getImageMeta(el);
+                    handleAddPhotoOrder(
+                        orderId,
+                        meta ?? el,
+                        order,
+                        { folderName: folderPath, photoNumber: allImages.length }
+                    );
+
                 }
             }
         }
@@ -293,7 +326,17 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
             }
             return;
         }
-        handleAddAllPhotoOrder(orderId, allImages, order, { folderName: folderPath, photoNumber: allImages.length })
+        const imagesMeta = allImages
+            .map((img: any) => ({ image: normalizePath(img?.path), mtimeMs: img?.mtimeMs }))
+            .filter((x: any) => x.image);
+
+        handleAddAllPhotoOrder(
+            orderId,
+            imagesMeta,
+            order,
+            { folderName: folderPath, photoNumber: allImages.length }
+        );
+
         setAddAllPhotoAction(false);
     };
 
@@ -301,6 +344,7 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
         addAllPhotos: handleAddAllPhotos,
         // жёсткий ресет: очистит кэш этой папки и стянет заново (полезно при смене источника)
         hardResetImages: async () => {
+            setThumbVersion(Date.now());
             await queryClient.removeQueries({ queryKey: ['images', folderPath], exact: true });
             await refetch();
         },
@@ -343,11 +387,11 @@ export const PhotoGallery = memo(forwardRef<PhotoGalleryHandle, PhotoGalleryProp
                                         }}
                                     >
                                         {!photoNone && (
-                                            <PhotoCard key={image} image={image} onClick={openPreview} index={itemIndex}
+                                            <PhotoCard key={image.path} image={image.path} mtimeMs={image.mtimeMs} onClick={openPreview} index={itemIndex}
                                                 selectPhotos={order?.images ?? []}
                                                 toggleSelect={toggleSelect}
                                                 checkSelectPhoto={checkSelectPhoto} dir={directories.photos}
-
+                                                thumbVersion={thumbVersion}
                                             />
                                         )}
                                     </div>

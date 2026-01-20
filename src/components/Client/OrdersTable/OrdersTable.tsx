@@ -16,8 +16,26 @@ import { useProducts } from "@/hooks/Products/useGetProducts";
 import { useEditCommentOrder } from "@/hooks/Order/useEditCommentOrder";
 
 
-const ensureLeadingSlash = (p: string) => (p.startsWith('/') ? p : `/${p}`);
-const normalizedPath = (p: string) => (p.replace(/\\/g, '/'));
+const normalizePath = (p: unknown) => String(p ?? '').replace(/\\/g, '/');
+
+const safeDecode = (s: unknown) => {
+    const str = String(s ?? '');
+    try {
+        return decodeURIComponent(str);
+    } catch {
+        return str;
+    }
+};
+
+const buildThumbSrc = (imagePathRaw: unknown, w: number, h: number, ver?: number | string) => {
+    const decoded = safeDecode(imagePathRaw);
+    const normalized = normalizePath(decoded);
+
+    const base =
+        `/api/dynamic-thumbnail?img=${encodeURIComponent(normalized)}&width=${w}&height=${h}`;
+
+    return ver ? `${base}&ver=${encodeURIComponent(String(ver))}` : base;
+};
 
 export type Product = {
     id: string;
@@ -31,8 +49,10 @@ export type Product = {
 type Image = {
     id: string;
     image: string;
-    products: Product[];
+    mtimeMs?: number;
+    products?: Product[];
 };
+
 
 type Order = {
     id: string;
@@ -276,29 +296,46 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                                                         <div className={styles.wrapperPhotoCard}>
                                                                             <Typography>
                                                                                 <strong>Фото:</strong>
-                                                                                <Image
-                                                                                    unoptimized={true}
-                                                                                    quality={30}
-                                                                                    src={`/api/dynamic-thumbnail?img=${image.image}&width=300&height=300`}
-                                                                                    alt={'photo'} width={212}
-                                                                                    height={114}
-                                                                                    className={styles.image} />
-                                                                                <span className={styles.photoName}>{path.basename(normalizedPath(decodeURIComponent(image.image)))}</span>
+                                                                                {(() => {
+                                                                                    const w = 300;
+                                                                                    const h = 300;
+                                                                                    const ver = image.mtimeMs ?? 0;
+                                                                                    const thumbSrc = buildThumbSrc(image.image, w, h, ver);
+
+                                                                                    const decodedName = safeDecode(image.image);
+                                                                                    const fileName = path.basename(normalizePath(decodedName));
+
+                                                                                    return (
+                                                                                        <>
+                                                                                            <Image
+                                                                                                unoptimized
+                                                                                                quality={30}
+                                                                                                src={thumbSrc}
+                                                                                                alt="photo"
+                                                                                                width={212}
+                                                                                                height={114}
+                                                                                                className={styles.image}
+                                                                                            />
+                                                                                            <span className={styles.photoName}>{fileName}</span>
+                                                                                        </>
+                                                                                    );
+                                                                                })()}
+
                                                                             </Typography>
                                                                             <Button
                                                                                 variant="outlined"
                                                                                 color="error"
                                                                                 size="small"
                                                                                 startIcon={<Delete className={styles.icon} />}
-                                                                                onClick={() => handleDeletePhoto(image.image, order.id, order)}
+                                                                                onClick={() => handleDeletePhoto(normalizePath(image.image), order.id, order)}
                                                                                 style={{ marginTop: "10px", fontSize: '12px', padding: "1px 5px", width: '212px' }}
                                                                             >Удалить фото
                                                                             </Button>
                                                                         </div>
-                                                                        {products && <SelectProducts products={products.docs} selectProducts={image.products}
+                                                                        {products && <SelectProducts products={products.docs} selectProducts={image.products ?? []}
                                                                             onSelectionChange={(format) => handleSelectionChange(format, order.id, order, image.image)} />}
                                                                     </TableCell>
-                                                                    {image.products.length ?
+                                                                    {(image.products ?? []).length ?
                                                                         <>
                                                                             <TableCell>
                                                                                 <div className={styles.wrapperProducts}>
@@ -306,7 +343,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                                                                         <strong>Товары:</strong>
                                                                                     </Typography>
                                                                                     <ul className={styles.product}>
-                                                                                        {image.products.filter((product) => product.id).map((product) => (
+                                                                                        {(image.products ?? []).filter((product) => product.id).map((product) => (
                                                                                             <li key={product.id} className={styles.itemList}>
                                                                                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                                                                     <span>{product.label}</span>
@@ -323,7 +360,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                                                                         <strong>Применить ко всем:</strong>
                                                                                     </Typography>
                                                                                     <ul className={styles.forAll}>
-                                                                                        {image.products.filter((product) => product.id).map((product) => (
+                                                                                        {(image.products ?? []).filter((product) => product.id).map((product) => (
                                                                                             <li key={product.id} className={styles.itemList}>
                                                                                                 <Button
                                                                                                     variant="outlined"
@@ -368,7 +405,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                                                                         <strong>Эл.р:</strong>
                                                                                     </Typography>
                                                                                     <ul className={styles.electronicFrame}>
-                                                                                        {image.products.filter((product) => product.id).map((product) => (
+                                                                                        {(image.products ?? []).filter((product) => product.id).map((product) => (
                                                                                             <li key={product.id} className={styles.itemList}>
                                                                                                 <Checkbox
                                                                                                     checked={product.electronic_frame || false}
@@ -389,7 +426,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                                                                         <strong>Кол-во:</strong>
                                                                                     </Typography>
                                                                                     <ul className={styles.productQuantity}>
-                                                                                        {image.products.filter((product) => product.id).map((product) => (
+                                                                                        {(image.products ?? []).filter((product) => product.id).map((product) => (
                                                                                             <li key={product.id} className={styles.itemList}>
                                                                                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                                                                                     {(editingProduct && editingProduct?.id === product.id) ? (
@@ -453,7 +490,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
                                                                                         <strong>Удалить товар:</strong>
                                                                                     </Typography>
                                                                                     <ul className={styles.productQuantity}>
-                                                                                        {image.products.filter((product) => product.id).map((product) => (
+                                                                                        {(image.products ?? []).filter((product) => product.id).map((product) => (
                                                                                             <li key={product.id} className={styles.itemList}>
                                                                                                 <Button
                                                                                                     variant="outlined"

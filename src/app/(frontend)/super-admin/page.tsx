@@ -35,7 +35,7 @@ const SuperAdmin = () => {
     setOpen(false)
   }
 
-  const handleMonitoring = async () => {
+  const handleMonitoring = async (scope: 'all' | 'today') => {
     setLoadingMonitoring(true);
     setLoading(true);
     setMessage('');
@@ -45,10 +45,15 @@ const SuperAdmin = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ directoryPath: directories.photos })
+        body: JSON.stringify({ directoryPath: directories.photos, scope })
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(`Ошибка: ${data?.message ?? response.statusText}`);
+        return;
+      }
 
       if (data.success) {
         setMessage('Функция выполнена успешно: ' + data.result);
@@ -95,10 +100,14 @@ const SuperAdmin = () => {
   return (
     <div>
       <div className={styles.wrapperButtonSetting}>
-        <button className={styles.startMonitoring} disabled={loading} onClick={() => {
-          handleMonitoring()
+        <button className={`${styles.startMonitoring} ${styles.startMonitoringAll}`} disabled={loading} onClick={() => {
+          handleMonitoring('all')
         }}>
-          {loadingMonitoring ? 'Загрузка...' : 'Обновить папки'}</button>
+          {loadingMonitoring ? 'Загрузка...' : 'Обновить все папки'}</button>
+        <button className={`${styles.startMonitoring} ${styles.startMonitoringToday}`} disabled={loading} onClick={() => {
+          handleMonitoring('today')
+        }}>
+          {loadingMonitoring ? 'Загрузка...' : 'Обновить папки за сегодня'}</button>
         <button className={styles.startCleaner} disabled={loading} onClick={() => {
           if (period) {
             handleOpen()

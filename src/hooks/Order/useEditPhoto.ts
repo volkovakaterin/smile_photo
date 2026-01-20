@@ -11,8 +11,9 @@ export interface FolderStats {
 }
 
 export interface PhotoOrder {
-    image: string,
-    products: { product: string, quantity: number, label: string }[],
+    image: string;
+    mtimeMs?: number;
+    products?: { product: string; quantity: number; label: string; done?: boolean; electronic_frame?: boolean }[];
 }
 
 export interface EditPhotoPayload {
@@ -53,9 +54,17 @@ export const useEditOrder = () => {
     const { mutate: editPhoto } = useEditPhotoToOrder();
     const queryClient = useQueryClient();
 
+    type ImageMeta = { image: string; mtimeMs?: number };
+    type ImageInput = string | ImageMeta;
+
+    const normalizeImageInput = (input: ImageInput): ImageMeta => {
+        if (typeof input === 'string') return { image: input, mtimeMs: undefined };
+        return { image: input.image, mtimeMs: input.mtimeMs };
+    };
+
 
     //Добавить только фото без форматов
-    const handleAddPhotoOrder = (orderId, selectPhoto, order, fromFolder,) => {
+    const handleAddPhotoOrder = (orderId, selectPhoto: ImageInput, order, fromFolder) => {
         if (!orderId) {
             console.error('Заказ не открыт. Невозможно добавить фото.');
             return;
@@ -66,7 +75,20 @@ export const useEditOrder = () => {
             return;
         }
 
-        const newImage = { image: selectPhoto };
+        const { image, mtimeMs } = normalizeImageInput(selectPhoto);
+        const normalizedPath = normalizePath(image);
+
+        // ✅ защита от дублей (раньше могло добавлять одинаковые)
+        const exists = order?.images?.some((item) => normalizePath(item.image) === normalizedPath);
+        if (exists) {
+            console.log('Фото уже есть в заказе, пропускаю:', normalizedPath);
+            return;
+        }
+
+
+        const newImage: PhotoOrder = { image: normalizedPath, mtimeMs, products: [] };
+
+
         const updatedImages: PhotoOrder[] = order
             ? [...order.images, newImage]
             : [newImage];
@@ -74,75 +96,7 @@ export const useEditOrder = () => {
         // 2) Обновляем number_photos_in_folders
         const existingFolders = order?.number_photos_in_folders ?? [];
         const folderAlreadyExists = existingFolders.some(
-            f => f.folder_name === fromFolder.folderName
-        );
-
-        const updatedFolders = folderAlreadyExists
-            ? existingFolders
-            : [
-                ...existingFolders,
-                {
-                    folder_name: fromFolder.folderName,
-                    number_photos: fromFolder.photoNumber,
-                },
-            ];
-
-        editPhoto(
-            {
-                id: orderId,
-                photoOrder: updatedImages,
-                number_photos_in_folders: updatedFolders,
-            },
-            {
-                onSuccess: (data: any) => {
-                    queryClient.invalidateQueries({ queryKey: ['order'] });
-                },
-                onError: (error) => {
-                    console.error('Ошибка при добавлении фото в заказ:', error);
-                },
-            }
-        );
-
-    }
-
-    //Добавить все фото из папки (без форматов)
-    const handleAddAllPhotoOrder = (orderId, images, order, fromFolder) => {
-        if (!orderId) {
-            console.error('Заказ не открыт. Невозможно добавить фото.');
-            return;
-        }
-
-        if (!images) {
-            console.error('Фото не выбрано. Невозможно добавить фото.');
-            return;
-        }
-
-        // 1) Собираем Set из уже добавленных путей к изображениям
-        const existingSet = new Set(order?.images.map(item => normalizePath(item.image)));
-
-        // 2) Оставляем только те пути, которых нет в заказе
-        const toAdd = images
-            .filter(imgPath => !existingSet.has(normalizePath(imgPath)))
-            .map(imgPath => normalizePath(imgPath));
-
-        if (!toAdd.length) {
-            console.log('Нет новых фото для добавления — все уже в заказе.');
-            return;
-        }
-
-        // 3) Формируем объекты PhotoOrder для каждого нового пути
-        const newImages: PhotoOrder[] = toAdd.map((element) => ({
-            image: element
-        }));
-
-        const updatedImages: PhotoOrder[] = order && order.images
-            ? [...order.images, ...newImages]
-            : newImages;
-
-        // 4) Обновляем number_photos_in_folders
-        const existingFolders = order?.number_photos_in_folders ?? [];
-        const folderAlreadyExists = existingFolders.some(
-            f => f.folder_name === fromFolder.folderName
+            (f) => f.folder_name === fromFolder.folderName
         );
 
         const updatedFolders = folderAlreadyExists
@@ -168,10 +122,80 @@ export const useEditOrder = () => {
                 onError: (error) => {
                     console.error('Ошибка при добавлении фото в заказ:', error);
                 },
-            },
+            }
+        );
+    };
+
+    //Добавить все фото из папки (без форматов)
+    const handleAddAllPhotoOrder = (orderId, images: ImageInput[], order, fromFolder) => {
+        if (!orderId) {
+            console.error('Заказ не открыт. Невозможно добавить фото.');
+            return;
+        }
+
+        if (!images?.length) {
+            console.error('Фото не выбраны. Невозможно добавить фото.');
+            return;
+        }
+
+        // 1) Set уже добавленных фото
+        const existingSet = new Set((order?.images ?? []).map((item) => normalizePath(item.image)));
+
+        // 2) Нормализуем вход и выкидываем то, что уже есть
+        const toAddMeta: ImageMeta[] = images
+            .map(normalizeImageInput)
+            .map(({ image, mtimeMs }) => ({ image: normalizePath(image), mtimeMs }))
+            .filter(({ image }) => !!image)
+            .filter(({ image }) => !existingSet.has(image));
+
+        if (!toAddMeta.length) {
+            console.log('Нет новых фото для добавления — все уже в заказе.');
+            return;
+        }
+
+        // 3) Формируем PhotoOrder
+        const newImages: PhotoOrder[] = toAddMeta.map(({ image, mtimeMs }) => ({
+            image,
+            mtimeMs,
+            products: [],
+        }));
+
+
+        const updatedImages: PhotoOrder[] =
+            order && order.images ? [...order.images, ...newImages] : newImages;
+
+        // 4) Обновляем number_photos_in_folders
+        const existingFolders = order?.number_photos_in_folders ?? [];
+        const folderAlreadyExists = existingFolders.some(
+            (f) => f.folder_name === fromFolder.folderName
         );
 
-    }
+        const updatedFolders = folderAlreadyExists
+            ? existingFolders
+            : [
+                ...existingFolders,
+                {
+                    folder_name: fromFolder.folderName,
+                    number_photos: fromFolder.photoNumber,
+                },
+            ];
+
+        editPhoto(
+            {
+                id: orderId,
+                photoOrder: updatedImages,
+                number_photos_in_folders: updatedFolders,
+            },
+            {
+                onSuccess: () => {
+                    queryClient.invalidateQueries({ queryKey: ['order'] });
+                },
+                onError: (error) => {
+                    console.error('Ошибка при добавлении фото в заказ:', error);
+                },
+            }
+        );
+    };
 
     //Редактировать заказ из формы выбора формата
     const editOrder = (productsWithPhoto: FormData, orderId, selectPhoto, order) => {
@@ -237,27 +261,33 @@ export const useEditOrder = () => {
 
         let images = [...order.images];
 
-        const updatedArray = images.map((item) => {
-            const labelExists = item.products.some((product) => product.label === format.format);
+        const updatedArray: PhotoOrder[] = images.map((item) => {
+            const products = [...(item.products ?? [])]; // ✅ всегда массив
+            const labelExists = products.some((p) => p.label === format.format);
+
             if (!labelExists) {
-                item.products.push({
+                products.push({
                     product: format.id,
                     label: format.format,
                     quantity: 1,
                 });
             }
 
-            return item;
+            return { ...item, products };
         });
 
-        if (!images.some(item => normalizePath(item.image) == selectPhoto)) {
+        const selectedPath = normalizePath(selectPhoto);
+
+        if (!updatedArray.some((item) => normalizePath(item.image) === selectedPath)) {
             updatedArray.push({
-                image: selectPhoto,
-                products: [{
-                    product: format.id,
-                    label: format.format,
-                    quantity: 1,
-                }]
+                image: selectedPath,
+                products: [
+                    {
+                        product: format.id,
+                        label: format.format,
+                        quantity: 1,
+                    },
+                ],
             });
         }
 
@@ -288,13 +318,10 @@ export const useEditOrder = () => {
 
         // Клонируем массив картинок и фильтруем продукты внутри каждой
         const updatedArray = order.images.map(item => {
-            // оставляем только те продукты, чей label НЕ совпадает с format.format
-            const filteredProducts = item.products.filter(p => p.label !== format.format);
-            return {
-                ...item,
-                products: filteredProducts,
-            };
+            const filteredProducts = (item.products ?? []).filter(p => p.label !== format.format);
+            return { ...item, products: filteredProducts };
         });
+
 
         // Отправляем запрос на бэкенд
         editPhoto(
@@ -396,17 +423,19 @@ export const useEditOrder = () => {
         }
         let images = [...order.images];
 
-        const updatedArray = images.map((item) => {
-            const imageExists = normalizePath(item.image) == selectPhoto;
-            if (imageExists) {
-                item.products.push({
+
+        const updatedArray: PhotoOrder[] = images.map((item) => {
+            const products = [...(item.products ?? [])];
+
+            if (normalizePath(item.image) === selectPhoto) {
+                products.push({
                     product: format.id,
                     label: format.name,
                     quantity: 1,
                 });
             }
 
-            return item;
+            return { ...item, products };
         });
 
         const body: PhotoOrder[] = updatedArray;
@@ -428,17 +457,13 @@ export const useEditOrder = () => {
     //Удалить продукт для одного фото
     const handleDeleteProduct = (targetPhoto: string, orderId: string, order: { images: PhotoOrder[] }, targetProduct: { product: string }) => {
         const images = [...order.images];
-        const newImages = images
-            .map(item => {
-                if (normalizePath(item.image) === targetPhoto) {
-                    const filteredProducts = item.products.filter(product => product.label !== targetProduct.product);
-                    return {
-                        ...item,
-                        products: filteredProducts,
-                    };
-                }
-                return item;
-            })
+        const newImages = images.map(item => {
+            if (normalizePath(item.image) === targetPhoto) {
+                const filteredProducts = (item.products ?? []).filter(p => p.label !== targetProduct.product);
+                return { ...item, products: filteredProducts };
+            }
+            return item;
+        });
 
         editPhoto(
             { photoOrder: newImages, id: orderId },
@@ -462,12 +487,12 @@ export const useEditOrder = () => {
             if (normalizePath(item.image) === targetProduct.image) {
                 return {
                     ...item,
-                    products: item.products.map(product => {
+                    products: (item.products ?? []).map(product => {
                         if (product.label === targetProduct.label) {
                             return { ...product, quantity: newQuantity };
                         }
                         return product;
-                    }),
+                    })
                 };
             }
             return item;
@@ -495,7 +520,7 @@ export const useEditOrder = () => {
             if (normalizePath(item.image) === targetProduct.image) {
                 return {
                     ...item,
-                    products: item.products.map(product => {
+                    products: (item.products ?? []).map(product => {
                         if (product.id === targetProduct.product.id) {
                             return { ...product, done: !targetProduct.product.done };
                         }
@@ -527,7 +552,7 @@ export const useEditOrder = () => {
         const newImages = images.map(item => {
             return {
                 ...item,
-                products: item.products.map(product => {
+                products: (item.products ?? []).map(product => {
                     return { ...product, done: true };
                 }),
             };
@@ -555,7 +580,7 @@ export const useEditOrder = () => {
             if (normalizePath(item.image) === targetProduct.image) {
                 return {
                     ...item,
-                    products: item.products.map(product => {
+                    products: (item.products ?? []).map(product => {
                         if (product.id === targetProduct.product.id) {
 
                             return { ...product, electronic_frame: !targetProduct.product.electronic_frame };

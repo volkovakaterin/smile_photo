@@ -8,7 +8,6 @@ import Delete from '@/assets/icons/icon_trash.svg';
 import Basket from '@/assets/icons/icon_shop_white.svg';
 import Edit from '@/assets/icons/edit-3.svg';
 import path from 'path';
-import { useFunctionalMode } from '@/providers/FunctionalMode';
 
 export type ImageType = {
     image: string; id: string;
@@ -26,16 +25,40 @@ interface PhotoCardProps {
     quantity?: number;
     dir: string;
     openPreviewModal?: (image: string) => void;
+    thumbVersion?: number;
+    mtimeMs?: number;
+    basketVisitId?: number;
+    refreshMap?: Record<string, number>;
 }
 
-const normalizePath = (p) => p.replace(/\\/g, '/');
+const normalizePath = (p: unknown) => String(p ?? '').replace(/\\/g, '/');
+
 
 export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelectPhoto, selectPhotos,
-    fromBasket, onOpen, quantity, openPreviewModal }: PhotoCardProps) => {
+    fromBasket, onOpen, quantity, openPreviewModal, thumbVersion, mtimeMs, basketVisitId, refreshMap }: PhotoCardProps) => {
     const [btnParams, setBtnParams] = useState<{ icon: string, backgroundColor: string } | undefined>(undefined);
     const [select, setSelect] = useState(false);
     const [normalizeImage, setNormalizeImage] = useState('');
-    const { mode } = useFunctionalMode();
+    const w = 200;
+    const h = 200;
+    const baseNoVer =
+        `/api/dynamic-thumbnail?img=${encodeURIComponent(normalizeImage)}&width=${w}&height=${h}`;
+
+    // Только для галереи (там mtimeMs настоящий из /check-images)
+    const baseWithVer =
+        baseNoVer + (typeof mtimeMs === 'number' && mtimeMs > 0 ? `&ver=${mtimeMs}` : '');
+
+    const srcGallery =
+        baseWithVer + (thumbVersion ? `&v=${thumbVersion}` : ''); // v = форс
+
+    // ✅ корзина:
+    const vBasket = refreshMap?.[normalizeImage];
+    const srcBasket =
+        baseNoVer + '&reval=1' + (vBasket ? `&bv=${vBasket}` : '');
+
+    const src = fromBasket ? srcBasket : srcGallery;
+
+    const ready = !fromBasket || !!vBasket;
 
     useEffect(() => {
         const normalizeImage = normalizePath(image);
@@ -54,9 +77,9 @@ export const PhotoCard = memo(({ image, onClick, index, toggleSelect, checkSelec
         <div style={{ paddingTop: `${!fromBasket ? '30px' : false}` }}>
             <div className={styles.PhotoCard}>
                 {(fromBasket && quantity != null && quantity > 0) && (<span className={styles.quantity} onClick={onOpen}>{quantity}</span>)}
-                {normalizeImage ? <Image
+                {normalizeImage && ready ? <Image
                     unoptimized={true}
-                    src={`/api/dynamic-thumbnail?img=${normalizeImage}`}
+                    src={src}
                     fill alt={'photo'} onClick={
                         () => {
                             fromBasket ? (openPreviewModal && openPreviewModal(normalizeImage)) : (onClick && onClick(index))

@@ -639,6 +639,7 @@ export interface Form {
 export interface Folder {
   id: string;
   name: string;
+  fullPath: string;
   path?: string | null;
   with_photo?: boolean | null;
   fs_created_at?: number | null;
@@ -663,6 +664,7 @@ export interface Order {
   images?:
     | {
         image: string;
+        mtimeMs?: number | null;
         addedAt: string;
         products?:
           | {
@@ -1163,6 +1165,7 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface FoldersSelect<T extends boolean = true> {
   name?: T;
+  fullPath?: T;
   path?: T;
   with_photo?: T;
   fs_created_at?: T;
@@ -1187,6 +1190,7 @@ export interface OrdersSelect<T extends boolean = true> {
     | T
     | {
         image?: T;
+        mtimeMs?: T;
         addedAt?: T;
         products?:
           | T

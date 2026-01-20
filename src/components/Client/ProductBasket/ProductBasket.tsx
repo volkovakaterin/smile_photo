@@ -15,11 +15,14 @@ interface ProductBasketProps {
     openPreviewModal?: (image: string) => void;
     images?: { image: string; quantity: number }[];
     mode: string;
+    basketVisitId?: number;
+    refreshMap?: Record<string, number>;
+
 }
 
 
 const ProductBasket = ({ toggleSelect, checkSelectPhoto, selectPhotos, product, onOpen, dir,
-    openPreviewModal, images, mode }: ProductBasketProps) => {
+    openPreviewModal, images, mode, basketVisitId, refreshMap }: ProductBasketProps) => {
     const [cards, setCards] = useState<{ image: string }[] | { image: string; quantity: number }[]>([]);
 
     useEffect(() => {
@@ -34,14 +37,19 @@ const ProductBasket = ({ toggleSelect, checkSelectPhoto, selectPhotos, product, 
             {product && <span className={styles.title}>{product.product}</span>}
             <div className={styles.wrapperPhoto}>
                 {cards.map((image, index) => (
-                    <PhotoCard key={index} fromBasket={true} image={image.image}
+                    <PhotoCard
+                        key={`${image.image}-${basketVisitId ?? 0}`}
+                        basketVisitId={basketVisitId}
+                        refreshMap={refreshMap}
+                        fromBasket={true} image={image.image}
+                        mtimeMs={0}
                         quantity={image.quantity}
                         index={index} toggleSelect={toggleSelect}
                         checkSelectPhoto={checkSelectPhoto}
                         selectPhotos={selectPhotos}
                         onOpen={onOpen ? () => onOpen(image) : undefined}
                         openPreviewModal={openPreviewModal}
-                        dir={dir}></PhotoCard>))}
+                        dir={dir} ></PhotoCard>))}
             </div>
         </div>
     );
