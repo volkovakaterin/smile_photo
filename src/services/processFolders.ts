@@ -25,6 +25,15 @@ function getTodayRangeMs() {
     return { startMs: start.getTime(), endMs: end.getTime() };
 }
 
+function getTodayFolderName() {
+    const d = new Date();
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = String(d.getFullYear());
+    return `${dd}-${mm}-${yyyy}`; // строго DD-MM-YYYY
+}
+
+
 async function loadAllFolders(payload: any) {
     const docs: any[] = [];
     let page = 1;
@@ -144,7 +153,7 @@ async function upsertFolderSafe(payload: any, cacheByFullPath: Map<string, any>,
 /**
  * Загрузка всех документов конкретной ветки: root + root/*
  */
-async function loadBranchDocs(payload: any, rootName: string) {
+async function loadBranchDocs(payload: any, rootFullPath: string) {
     const docs: any[] = [];
     let page = 1;
 
@@ -156,8 +165,8 @@ async function loadBranchDocs(payload: any, rootName: string) {
             depth: 0,
             where: {
                 or: [
-                    { fullPath: { equals: rootName } },
-                    { fullPath: { like: `${rootName}/%` } },
+                    { fullPath: { equals: rootFullPath } },
+                    { fullPath: { like: `${rootFullPath}/%` } },
                 ],
             },
         });
@@ -169,6 +178,7 @@ async function loadBranchDocs(payload: any, rootName: string) {
 
     return docs;
 }
+
 
 export default async function processFolders(payload: Payload, dir: string, options: Options = { scope: 'all' }) {
     if (!dir) throw new Error('Путь к директории не задан');
@@ -261,26 +271,168 @@ export default async function processFolders(payload: Payload, dir: string, opti
         };
     }
 
-    // ========== scope: today ==========
-    const { startMs, endMs } = getTodayRangeMs();
+    // ========== scope: today (production fast) ==========
 
-    // 1) Находим ВСЕ корневые папки, созданные сегодня (может быть несколько)
+    function getTodayFolderName() {
+        const d = new Date();
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = String(d.getFullYear());
+        return `${dd}-${mm}-${yyyy}`; // DD-MM-YYYY
+    }
+
+    function isTodayFolder(folderName: string, birthMs: number, startMs: number, endMs: number, todayName: string) {
+        return (birthMs >= startMs && birthMs < endMs) || folderName === todayName;
+    }
+
+    type TodayRoot = {
+        abs: string;
+        fullPath: string; // relative from photosDirectory
+        name: string;
+        path: string;     // parent relative path ('' or 'a' for 'a/b')
+        birthMs: number;
+    };
+
+    /**
+     * Оставляем только "верхние" корни: если есть A, то A/B выкидываем.
+     */
+    function filterNestedRoots(roots: TodayRoot[]) {
+        // сортируем короткие пути раньше длинных
+        const sorted = [...roots].sort((a, b) => a.fullPath.length - b.fullPath.length);
+
+        const kept: TodayRoot[] = [];
+        const keptSet = new Set<string>();
+
+        for (const r of sorted) {
+            // проверяем, что никакой уже оставленный корень не является префиксом r.fullPath + "/"
+            let isNested = false;
+            // быстрый чек по родителям (обычно 1-2 итерации)
+            const parts = r.fullPath.split('/');
+            while (parts.length > 1) {
+                parts.pop();
+                const parent = parts.join('/');
+                if (keptSet.has(parent)) {
+                    isNested = true;
+                    break;
+                }
+            }
+            if (!isNested) {
+                kept.push(r);
+                keptSet.add(r.fullPath);
+            }
+        }
+
+        return kept;
+    }
+
+    /**
+     * Грузим документы для всех веток одним (или несколькими) запросами:
+     * OR: [equals root, like root/%, equals root2, like root2/% ...]
+     * Чанкуем условия, чтобы не упереться в лимиты запроса.
+     */
+    async function loadDocsForRoots(payload: any, rootFullPaths: string[]) {
+        const docs: any[] = [];
+        if (rootFullPaths.length === 0) return docs;
+
+        const makeConditions = (roots: string[]) =>
+            roots.flatMap((root) => [
+                { fullPath: { equals: root } },
+                { fullPath: { like: `${root}/%` } },
+            ]);
+
+        // 100 roots => 200 OR условий. Можно менять под ваш Payload/Mongo лимит.
+        const ROOTS_PER_CHUNK = 80;
+
+        for (let i = 0; i < rootFullPaths.length; i += ROOTS_PER_CHUNK) {
+            const chunk = rootFullPaths.slice(i, i + ROOTS_PER_CHUNK);
+            const whereOr = makeConditions(chunk);
+
+            let page = 1;
+            while (true) {
+                const res = await payload.find({
+                    collection: 'folders',
+                    page,
+                    limit: 500,
+                    depth: 0,
+                    where: { or: whereOr },
+                });
+
+                docs.push(...res.docs);
+                if (page >= res.totalPages) break;
+                page++;
+            }
+        }
+
+        return docs;
+    }
+
+    const { startMs, endMs } = getTodayRangeMs();
+    const todayName = getTodayFolderName();
+
+    // 1) Ищем today-папки на 1-2 уровнях (глубже не идём)
+    const todayCandidates: TodayRoot[] = [];
+
     const rootItems = fs.readdirSync(photosDirectory, { withFileTypes: true });
-    const todayRootDirs: { abs: string; name: string; birthMs: number }[] = [];
 
     for (const it of rootItems) {
         if (!it.isDirectory()) continue;
 
-        const abs = path.join(photosDirectory, it.name);
-        const stat = fs.statSync(abs);
-        const birthMs = stat.birthtimeMs;
+        const abs1 = path.join(photosDirectory, it.name);
+        const stat1 = fs.statSync(abs1);
+        const birth1 = stat1.birthtimeMs;
 
-        if (birthMs >= startMs && birthMs < endMs) {
-            todayRootDirs.push({ abs, name: it.name, birthMs });
+        const fullPath1 = normalizePath(path.relative(photosDirectory, abs1)); // it.name
+        if (isTodayFolder(it.name, birth1, startMs, endMs, todayName)) {
+            todayCandidates.push({
+                abs: abs1,
+                fullPath: fullPath1,
+                name: it.name,
+                path: '',
+                birthMs: birth1,
+            });
+        }
+
+        // уровень 2
+        let level2Items: fs.Dirent[] = [];
+        try {
+            level2Items = fs.readdirSync(abs1, { withFileTypes: true });
+        } catch {
+            // если нет доступа/ошибка чтения — пропускаем подпапки
+            continue;
+        }
+
+        for (const sub of level2Items) {
+            if (!sub.isDirectory()) continue;
+
+            const abs2 = path.join(abs1, sub.name);
+            const stat2 = fs.statSync(abs2);
+            const birth2 = stat2.birthtimeMs;
+
+            if (!isTodayFolder(sub.name, birth2, startMs, endMs, todayName)) continue;
+
+            const fullPath2 = normalizePath(path.relative(photosDirectory, abs2)); // `${it.name}/${sub.name}`
+            const parentDir = normalizePath(path.dirname(fullPath2));
+            const parentPath2 = parentDir === '.' ? '' : parentDir;
+
+            todayCandidates.push({
+                abs: abs2,
+                fullPath: fullPath2,
+                name: sub.name,
+                path: parentPath2,
+                birthMs: birth2,
+            });
         }
     }
 
-    // Если сегодня вообще нет новых корневых папок — ничего не делаем
+    // Нормализация: убираем дубликаты и вложенные корни
+    const uniqMap = new Map<string, TodayRoot>();
+    for (const r of todayCandidates) {
+        // если одинаковый fullPath попался дважды — берём более "новый" birthMs (не принципиально)
+        const prev = uniqMap.get(r.fullPath);
+        if (!prev || r.birthMs > prev.birthMs) uniqMap.set(r.fullPath, r);
+    }
+    let todayRootDirs = filterNestedRoots(Array.from(uniqMap.values()));
+
     if (todayRootDirs.length === 0) {
         return {
             scope: 'today',
@@ -291,71 +443,63 @@ export default async function processFolders(payload: Payload, dir: string, opti
         };
     }
 
-    // 2) Загружаем из БД ТОЛЬКО документы сегодняшних веток (для ускорения today)
-    cacheByFullPath = new Map<string, any>();
+    // 2) Один раз грузим ВСЕ документы БД, которые относятся к этим веткам
+    const rootFullPaths = todayRootDirs.map((x) => x.fullPath);
+    const existingBranchDocs = await loadDocsForRoots(payload, rootFullPaths);
 
-    for (const root of todayRootDirs) {
-        const branchDocs = await loadBranchDocs(payload, root.name);
-        for (const doc of branchDocs) {
-            if (doc?.fullPath) cacheByFullPath.set(doc.fullPath, doc);
-        }
+    // cacheByFullPath для upsert без find на каждый апдейт
+    cacheByFullPath = new Map<string, any>();
+    for (const doc of existingBranchDocs) {
+        if (doc?.fullPath) cacheByFullPath.set(doc.fullPath, doc);
     }
 
-    // 3) Апсертим корневые папки today и рекурсивно обходим ТОЛЬКО их
+    // 3) Апсертим корни и рекурсивно обходим только их (без повторных обходов)
     for (const d of todayRootDirs) {
-        // upsert самой корневой папки дня
-        const fullPath = normalizePath(path.relative(photosDirectory, d.abs)); // = d.name
-        const parentPath = '';
         const withPhoto = hasPhotoInDir(d.abs);
 
         scannedDirs++;
-        foundFullPaths.add(fullPath);
+        foundFullPaths.add(d.fullPath);
 
         await upsertFolderSafe(payload, cacheByFullPath, {
-            fullPath,
+            fullPath: d.fullPath,
             name: d.name,
-            path: parentPath,
+            path: d.path,
             with_photo: withPhoto,
             fs_created_at: d.birthMs,
         });
 
         upsertedDirs++;
 
-        // затем вглубь только в эту папку
         await traverseRecursive(d.abs);
     }
 
-    // 4) Удаляем из БД отсутствующие папки ТОЛЬКО внутри сегодняшних веток
-    //    (важно: не трогаем другие дни)
-    const todayRootNames = todayRootDirs.map((x) => x.name);
+    // 4) Удаляем отсутствующие ТОЛЬКО среди уже загруженных документов веток
+    //    (без повторного loadBranchDocs())
+    for (const doc of existingBranchDocs) {
+        const fp = doc?.fullPath;
+        if (!fp) continue;
 
-    for (const rootName of todayRootNames) {
-        const branchDocs = await loadBranchDocs(payload, rootName);
-
-        for (const doc of branchDocs) {
-            const fp = doc?.fullPath;
-            if (!fp) continue;
-
-            if (!foundFullPaths.has(fp)) {
-                try {
-                    await payload.delete({
-                        collection: 'folders',
-                        id: doc.id,
-                        overrideAccess: true,
-                    });
-                    deletedMissing++;
-                } catch (e) {
-                    console.error(`Ошибка при удалении (today) fullPath=${fp}:`, e);
-                }
+        if (!foundFullPaths.has(fp)) {
+            try {
+                await payload.delete({
+                    collection: 'folders',
+                    id: doc.id,
+                    overrideAccess: true,
+                });
+                deletedMissing++;
+            } catch (e) {
+                console.error(`Ошибка при удалении (today) fullPath=${fp}:`, e);
             }
         }
     }
 
     return {
         scope: 'today',
-        todayRootDirs: todayRootNames,
+        todayRootDirs: rootFullPaths,
         scannedDirs,
         upsertedDirs,
         deletedMissing,
     };
+
+
 }
